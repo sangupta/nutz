@@ -25,7 +25,7 @@ import java.io.File;
 
 import org.apache.commons.io.FileUtils;
 
-import com.sangupta.html.comparer.HTMLComparer;
+import com.sangupta.comparator.HTMLComparer;
 import com.sangupta.nutz.ast.RootNode;
 
 /**

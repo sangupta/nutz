@@ -27,7 +27,7 @@ import java.util.List;
 
 import org.apache.commons.io.FileUtils;
 
-import com.sangupta.html.comparer.HTMLComparer;
+import com.sangupta.comparator.HTMLComparer;
 
 /**
  * 
