@@ -108,7 +108,10 @@ public class MarkupUtils {
 	}
 
 	/**
-	 * Finds the number of leading spaces to the line
+	 * Finds the number of leading spaces and the current leading position in the given
+	 * line. Returns an integer array containing the two values. The first value is the
+	 * leading position or the leading index in the string, and the second value is the
+	 * leading count of spaces where tabs have been converted to 4 counts of spaces.
 	 * 
 	 * @param line
 	 * @return
