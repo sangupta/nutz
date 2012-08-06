@@ -107,4 +107,49 @@ public class MarkupUtils {
 		return tokens; 
 	}
 
+	/**
+	 * Finds the number of leading spaces to the line
+	 * 
+	 * @param line
+	 * @return
+	 */
+	public static int[] findLeadingSpaces(String line) {
+		int[] array = new int[2];
+		array[0] = 0;
+		array[1] = 0;
+		
+		if(line.isEmpty()) {
+			return array;
+		}
+		
+		int index = 0;
+		int spaces = 0;
+		do {
+			if(index >= line.length()) {
+				break;
+			}
+			
+			char c = line.charAt(index);
+			if(c == ' ') {
+				index++;
+				spaces++;
+				continue;
+			}
+			
+			if(c == '\t') {
+				index++;
+				spaces += 4;
+				continue;
+			}
+			
+			break;
+		}
+		while(true);
+		
+		array[0] = index;
+		array[1] = spaces;
+		
+		return array;
+	}
+
 }

@@ -61,5 +61,32 @@ public class MarkupUtilsTest {
 		Assert.assertEquals("http://att.com/", tokens[0]);
 		Assert.assertEquals("AT&T", tokens[1]);
 	}
+	
+	@Test
+	public void testFindLeadingSpaces() {
+		int[] tokens = MarkupUtils.findLeadingSpaces("abc");
+		Assert.assertEquals(0, tokens[0]);
+		Assert.assertEquals(0, tokens[1]);
+
+		tokens = MarkupUtils.findLeadingSpaces(" abc");
+		Assert.assertEquals(1, tokens[0]);
+		Assert.assertEquals(1, tokens[1]);
+
+		tokens = MarkupUtils.findLeadingSpaces("  abc");
+		Assert.assertEquals(2, tokens[0]);
+		Assert.assertEquals(2, tokens[1]);
+
+		tokens = MarkupUtils.findLeadingSpaces("\tabc");
+		Assert.assertEquals(1, tokens[0]);
+		Assert.assertEquals(4, tokens[1]);
+
+		tokens = MarkupUtils.findLeadingSpaces("\t\tabc");
+		Assert.assertEquals(2, tokens[0]);
+		Assert.assertEquals(8, tokens[1]);
+
+		tokens = MarkupUtils.findLeadingSpaces(" \t abc");
+		Assert.assertEquals(3, tokens[0]);
+		Assert.assertEquals(6, tokens[1]);
+	}
 
 }

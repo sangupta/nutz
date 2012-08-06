@@ -38,7 +38,7 @@ public class RandomProcessorTest {
 	public static void main(String[] args) throws Exception {
 		String s2 = "src/main/resources/markdown_home_page.md";
 		
-		String fileName = "Amps and angle encoding";
+		String fileName = "Auto links";
 		String s3 = "src/test/resources/markdown/" + fileName + ".text";
 		String o3 = "src/test/resources/markdown/" + fileName + ".html";
 		

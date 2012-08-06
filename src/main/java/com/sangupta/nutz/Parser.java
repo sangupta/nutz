@@ -113,72 +113,75 @@ public class Parser {
 	 * @throws Exception
 	 */
 	private void parseLine(String line) throws Exception {
-		// int leadingSpaces = findLeadingSpaces(line);
+		final int[] spaceTokens = MarkupUtils.findLeadingSpaces(line);
+		final int leadingPosition = spaceTokens[0];
+		final int leadingSpaces = spaceTokens[1];
 		
-		if(line.startsWith("#")) {
-			lastNode = parseHeading(line);
-			root.addChild(lastNode);
-			return;
-		}
-		
-		// Github Extra: fenced code blocks
-		if(line.startsWith("```")) {
-			lastNode = parseFencedCodeBlock(line, "```");
-			root.addChild(lastNode);
-			return;
-		}
-		
-		// PHP Extra: fenced code blocks
-		if(line.startsWith("~~~")) {
-			lastNode = parseFencedCodeBlock(line, "~~~");
-			root.addChild(lastNode);
-			return;
-		}
-		
-		if(line.startsWith("===")) {
-			// turn previous text line into a heading of type H1
-			// if present, else parse this as a normal line
-			if(lastNode instanceof ParagraphNode) {
-				boolean broken = ((ParagraphNode) lastNode).breakIntoTextAndHeading(1);
-				if(broken) {
-					return;
+		if(leadingSpaces > 0) {
+			if(line.startsWith("#")) {
+				lastNode = parseHeading(line);
+				root.addChild(lastNode);
+				return;
+			}
+			
+			// Github Extra: fenced code blocks
+			if(line.startsWith("```")) {
+				lastNode = parseFencedCodeBlock(line, "```");
+				root.addChild(lastNode);
+				return;
+			}
+			
+			// PHP Extra: fenced code blocks
+			if(line.startsWith("~~~")) {
+				lastNode = parseFencedCodeBlock(line, "~~~");
+				root.addChild(lastNode);
+				return;
+			}
+			
+			if(line.startsWith("===")) {
+				// turn previous text line into a heading of type H1
+				// if present, else parse this as a normal line
+				if(lastNode instanceof ParagraphNode) {
+					boolean broken = ((ParagraphNode) lastNode).breakIntoTextAndHeading(1);
+					if(broken) {
+						return;
+					}
 				}
 			}
-		}
-		
-		if(line.startsWith("---")) {
-			// turn previous text line into a heading of type H2
-			// if present, else convert it into an HRULE
-			if(lastNode instanceof ParagraphNode) {
-				boolean broken = ((ParagraphNode) lastNode).breakIntoTextAndHeading(2);
-				if(broken) {
+			
+			if(line.startsWith("---")) {
+				// turn previous text line into a heading of type H2
+				// if present, else convert it into an HRULE
+				if(lastNode instanceof ParagraphNode) {
+					boolean broken = ((ParagraphNode) lastNode).breakIntoTextAndHeading(2);
+					if(broken) {
+						return;
+					}
+				}
+				
+				lastNode = new HRuleNode();
+				root.addChild(lastNode);
+				return;
+			}
+			
+			if(line.startsWith("[")) {
+				// parse an inline link reference
+				boolean found = parseLinkReference(line);
+				if(found) {
+					lastNode = null;
 					return;
 				}
 			}
 			
-			lastNode = new HRuleNode();
-			root.addChild(lastNode);
-			return;
-		}
-		
-		if(line.startsWith("[")) {
-			// parse an inline link reference
-			boolean found = parseLinkReference(line);
-			if(found) {
-				lastNode = null;
+			if(line.startsWith("* ")) {
+				// this is a list of data
+				lastNode = parseUnorderedList(line);
+				root.addChild(lastNode);
 				return;
 			}
 		}
 		
-		if(line.startsWith("* ")) {
-			// this is a list of data
-			lastNode = parseUnorderedList(line);
-			root.addChild(lastNode);
-			return;
-		}
-		
 		// check for leading spaces
-		int leadingSpaces = findLeadingSpaces(line);
 		if(leadingSpaces >= 4) {
 			// this is a verbatimn node
 			Node codeNode = parseVerbatimBlock(line);
@@ -188,6 +191,8 @@ public class Parser {
 				return;
 			}
 		}
+		
+		// check for starting 
 		
 		// try and see if this is an ordered list
 		if(lineStartsWithNumber(line)) {
@@ -265,7 +270,7 @@ public class Parser {
 				break;
 			}
 			
-			leadingSpaces = findLeadingSpaces(line);
+			leadingSpaces = MarkupUtils.findLeadingSpaces(line)[0];
 			if(leadingSpaces < 4) {
 				break;
 			}
@@ -326,41 +331,6 @@ public class Parser {
 		return true;
 	}
 
-	/**
-	 * Finds the number of leading spaces to the line
-	 * 
-	 * @param line
-	 * @return
-	 */
-	public int findLeadingSpaces(String line) {
-		if(line.isEmpty()) {
-			return -1;
-		}
-		
-		int index = -1;
-		do {
-			if((index + 1) >= line.length()) {
-				break;
-			}
-			
-			char c = line.charAt(index + 1);
-			if(c == ' ') {
-				index++;
-				continue;
-			}
-			
-			if(c == '\t') {
-				index += 4;
-				continue;
-			}
-			
-			break;
-		}
-		while(true);
-		
-		return index + 1;
-	}
-	
 	/**
 	 * Create an ordered list
 	 * 
