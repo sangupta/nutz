@@ -36,12 +36,11 @@ import com.sangupta.nutz.ast.RootNode;
 public class RandomProcessorTest {
 
 	public static void main(String[] args) throws Exception {
-		String s1 = "c:/projects/git/jerry/readme.md";
-		String s2 = "C:/projects/git/markdown/src/main/resources/markdown_home_page.md";
+		String s2 = "src/main/resources/markdown_home_page.md";
 		
-		String fileName = "Code Blocks";
-		String s3 = "C:/projects/git/markdown/src/main/resources/markdown/" + fileName + ".text";
-		String o3 = "C:/projects/git/markdown/src/main/resources/markdown/" + fileName + ".html";
+		String fileName = "Amps and angle encoding";
+		String s3 = "src/test/resources/markdown/" + fileName + ".text";
+		String o3 = "src/test/resources/markdown/" + fileName + ".html";
 		
 		File file = new File(s3);
 		String markup = FileUtils.readFileToString(file);

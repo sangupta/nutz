@@ -37,7 +37,7 @@ import com.sangupta.comparator.HTMLComparer;
 public class DaringFireballTestSuite {
 	
 	public static void main(String[] args) throws Exception {
-		File dir = new File("C:/projects/git/markdown/src/main/resources/markdown");
+		File dir = new File("src/test/resources/markdown");
 		File[] files = dir.listFiles();
 		
 		List<File> tests = new ArrayList<File>();
@@ -82,7 +82,7 @@ public class DaringFireballTestSuite {
 			}
 		}
 		
-		System.out.println("Tests pass: " + testsPass + "; fail: " + testsFail);
+		System.out.println("\n\n\n\nTests pass: " + testsPass + "; fail: " + testsFail);
 	}
 	
 }
