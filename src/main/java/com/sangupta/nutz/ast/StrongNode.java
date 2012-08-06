@@ -34,9 +34,22 @@ public class StrongNode extends TextNode {
 	
 	private TextNode textNode;
 	
+	public StrongNode(Node parent) {
+		super(parent);
+	}
+	
 	public StrongNode(Node parent, String text) {
 		super(parent);
 		this.textNode = new TextNodeParser().parse(this, text);
+	}
+	
+	public StrongNode(Node parent, TextNode textNode) {
+		super(parent);
+		this.textNode = textNode;
+	}
+	
+	public void setTextNode(TextNode textNode) {
+		this.textNode = textNode;
 	}
 	
 	@Override

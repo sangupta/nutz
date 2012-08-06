@@ -403,20 +403,28 @@ public class TextNodeParser implements Identifiers {
 	}
 
 	private void convertBoldOrUnderlineTerminatedToNode(int startCount, int endCount, String text) {
-		if((startCount == endCount) && (startCount == 1)) {
-			// create an italic text node
-			root.addChild(new EmphasisNode(root, text));
-			return;
+		if(startCount == endCount) {
+			switch(startCount) {
+				case 1:
+					// create an italic text node
+					root.addChild(new EmphasisNode(root, text));
+					return;
+					
+				case 2:
+					// create a strong node
+					root.addChild(new StrongNode(root, text));
+					return;
+
+				case 3:
+					StrongNode strongNode = new StrongNode(root);
+					EmphasisNode emphasisNode = new EmphasisNode(strongNode, text);
+					strongNode.setTextNode(emphasisNode);
+					root.addChild(strongNode);
+					return;
+			}
 		}
 		
-		if((startCount == endCount) && (startCount == 2)) {
-			// create a strong node
-			root.addChild(new StrongNode(root, text));
-			return;
-		}
-		
-		// TODO Auto-generated method stub
-		System.out.println(text + ":" + startCount + ", " + endCount);
+		System.out.println("*** Unhandled: " + text + ":" + startCount + ", " + endCount);
 	}
 
 	/**
