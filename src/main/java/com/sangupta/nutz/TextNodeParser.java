@@ -80,7 +80,9 @@ public class TextNodeParser implements Identifiers {
 	private void parse() {
 		do {
 			if(charAt(pos, ESCAPE_CHARACTER)) {
+				clearPending();
 				pos++;
+				lastConverted++;
 			}
 			
 			if(charAt(pos, HTML_OR_AUTOLINK_START)) {
@@ -88,7 +90,7 @@ public class TextNodeParser implements Identifiers {
 				parseHtmlOrAutoLinkBlock();
 			}
 			
-			if(charAt(pos, CODE_MARKER) && !charAt(pos + 1, CODE_MARKER)) {
+			if(charAt(pos, CODE_MARKER) && !charAt(pos + 1, CODE_MARKER) && !charAt(pos - 1, ESCAPE_CHARACTER)) {
 				clearPending();
 				parseCodeBlock();
 			}
@@ -103,12 +105,12 @@ public class TextNodeParser implements Identifiers {
 				parseLink();
 			}
 			
-			if(charAt(pos, ITALIC_OR_BOLD)) {
+			if(charAt(pos, ITALIC_OR_BOLD) && !charAt(pos - 1, ESCAPE_CHARACTER)) {
 				clearPending();
 				parseItalicOrBoldBlock(ITALIC_OR_BOLD);
 			}
 			
-			if(charAt(pos, ITALIC_OR_BOLD_UNDERSCORE)) {
+			if(charAt(pos, ITALIC_OR_BOLD_UNDERSCORE) && !charAt(pos - 1, ESCAPE_CHARACTER)) {
 				clearPending();
 				parseItalicOrBoldBlock(ITALIC_OR_BOLD_UNDERSCORE);
 			}
@@ -493,6 +495,10 @@ public class TextNodeParser implements Identifiers {
 	}
 	
 	private boolean charAt(int pos, char character) {
+		if(pos < 0) {
+			return false;
+		}
+		
 		if(pos < line.length()) {
 			if(line.charAt(pos) == character) {
 				return true;

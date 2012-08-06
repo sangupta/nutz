@@ -97,13 +97,17 @@ public class Parser {
 	 * @throws Exception
 	 */
 	private void readLines(Node root) throws Exception {
+		boolean readAhead = true;
 		do {
-			line = reader.readLine();
-			if(line == null) {
+			if(readAhead) {
+				this.line = reader.readLine();
+			}
+			
+			if(this.line == null) {
 				return;
 			}
 			
-			parseLine(root, line);
+			readAhead = parseLine(root, line);
 		} while(true);
 	}
 
@@ -113,7 +117,7 @@ public class Parser {
 	 * @param line
 	 * @throws Exception
 	 */
-	private void parseLine(Node currentRoot, String line) throws Exception {
+	private boolean parseLine(Node currentRoot, String line) throws Exception {
 		final int[] spaceTokens = MarkupUtils.findLeadingSpaces(line);
 		final int leadingPosition = spaceTokens[0];
 		final int leadingSpaces = spaceTokens[1];
@@ -122,21 +126,21 @@ public class Parser {
 			if(line.startsWith("#")) {
 				lastNode = parseHeading(currentRoot, line);
 				currentRoot.addChild(lastNode);
-				return;
+				return true;
 			}
 			
 			// Github Extra: fenced code blocks
 			if(line.startsWith("```")) {
 				lastNode = parseFencedCodeBlock(line, "```");
 				currentRoot.addChild(lastNode);
-				return;
+				return true;
 			}
 			
 			// PHP Extra: fenced code blocks
 			if(line.startsWith("~~~")) {
 				lastNode = parseFencedCodeBlock(line, "~~~");
 				currentRoot.addChild(lastNode);
-				return;
+				return true;
 			}
 			
 			if(line.startsWith("===")) {
@@ -145,7 +149,7 @@ public class Parser {
 				if(lastNode instanceof ParagraphNode) {
 					boolean broken = ((ParagraphNode) lastNode).breakIntoTextAndHeading(1);
 					if(broken) {
-						return;
+						return true;
 					}
 				}
 			}
@@ -156,13 +160,13 @@ public class Parser {
 				if(lastNode instanceof ParagraphNode) {
 					boolean broken = ((ParagraphNode) lastNode).breakIntoTextAndHeading(2);
 					if(broken) {
-						return;
+						return true;
 					}
 				}
 				
 				lastNode = new HRuleNode();
 				currentRoot.addChild(lastNode);
-				return;
+				return true;
 			}
 			
 			if(line.startsWith("[")) {
@@ -170,7 +174,7 @@ public class Parser {
 				boolean found = parseLinkReference(line);
 				if(found) {
 					lastNode = null;
-					return;
+					return true;
 				}
 			}
 			
@@ -178,7 +182,7 @@ public class Parser {
 				// this is a list of data
 				lastNode = parseUnorderedList(currentRoot, line);
 				currentRoot.addChild(lastNode);
-				return;
+				return true;
 			}
 		}
 		
@@ -189,7 +193,12 @@ public class Parser {
 			if(codeNode != null) {
 				lastNode = codeNode;
 				currentRoot.addChild(lastNode);
-				return;
+				
+				// one more line has just been read
+				// which needs to be parsed again
+//				parseLine(currentRoot, this.line);
+				
+				return false;
 			}
 		}
 		
@@ -205,14 +214,14 @@ public class Parser {
 			parseLine(blockQuoteNode, line.substring(leadingPosition + 1));
 			
 			currentRoot.addChild(blockQuoteNode);
-			return;
+			return true;
 		}
 		
 		// try and see if this is an ordered list
 		if(lineStartsWithNumber(line)) {
 			lastNode = parseOrderedList(currentRoot, line);
 			currentRoot.addChild(lastNode);
-			return;
+			return true;
 		}
 		
 		// check if line is empty
@@ -220,7 +229,7 @@ public class Parser {
 		if(line.trim().isEmpty()) {
 			lastNode = new PlainTextNode(currentRoot, "\n");
 			currentRoot.addChild(lastNode);
-			return;
+			return true;
 		}
 		
 		// parse the text line reading ahead as desired
@@ -229,13 +238,15 @@ public class Parser {
 		
 		// there may be a new line that would have been read
 		if(this.line != null) {
-			parseLine(currentRoot, this.line);
+			return parseLine(currentRoot, this.line);
 		}
+		
+		return true;
 	}
 
 	/**
 	 * Create a code block out of the verbatim block that has been created using
-	 * starting spaces.
+	 * 4 starting spaces.
 	 * 
 	 * @param line
 	 * @return
@@ -284,11 +295,14 @@ public class Parser {
 				break;
 			}
 			
-			leadingSpaces = MarkupUtils.findLeadingSpaces(line)[0];
-			if(leadingSpaces < 4) {
+			leadingSpaces = MarkupUtils.findLeadingSpaces(line)[1];
+			if(!line.isEmpty() && leadingSpaces < 4) {
 				break;
 			}
 		} while(true);
+		
+		// we need to consume the current pending line
+		this.line = line;
 		
 		CodeBlockNode node = new CodeBlockNode(collector.toString(), lang);
 		return node;
