@@ -400,7 +400,7 @@ public class TextNodeParser implements Identifiers {
 		convertBoldOrUnderlineTerminatedToNode(count, endCount, text);
 		
 		// reset
-		pos = index + endCount + 1;
+		pos = index + endCount;
 		lastConverted = pos;
 	}
 
