@@ -25,6 +25,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.StringReader;
 
+import com.sangupta.nutz.ast.BlockQuoteNode;
 import com.sangupta.nutz.ast.CodeBlockNode;
 import com.sangupta.nutz.ast.HRuleNode;
 import com.sangupta.nutz.ast.HeadingNode;
@@ -57,7 +58,7 @@ public class Parser {
 	/**
 	 * Reference to the root node of the AST
 	 */
-	private final RootNode root = new RootNode();
+	private final RootNode ROOT_NODE = new RootNode();
 	
 	/**
 	 * A collector that is used to collect data when we enter
@@ -85,9 +86,9 @@ public class Parser {
 	 */
 	public RootNode parse(String markup) throws Exception {
 		reader = new BufferedReader(new StringReader(markup));
-		readLines();
+		readLines(ROOT_NODE);
 		
-		return root;
+		return ROOT_NODE;
 	}
 	
 	/**
@@ -95,14 +96,14 @@ public class Parser {
 	 * 
 	 * @throws Exception
 	 */
-	private void readLines() throws Exception {
+	private void readLines(Node root) throws Exception {
 		do {
 			line = reader.readLine();
 			if(line == null) {
 				return;
 			}
 			
-			parseLine(line);
+			parseLine(root, line);
 		} while(true);
 	}
 
@@ -112,29 +113,29 @@ public class Parser {
 	 * @param line
 	 * @throws Exception
 	 */
-	private void parseLine(String line) throws Exception {
+	private void parseLine(Node currentRoot, String line) throws Exception {
 		final int[] spaceTokens = MarkupUtils.findLeadingSpaces(line);
 		final int leadingPosition = spaceTokens[0];
 		final int leadingSpaces = spaceTokens[1];
 		
-		if(leadingSpaces > 0) {
+		if(leadingSpaces == 0) {
 			if(line.startsWith("#")) {
-				lastNode = parseHeading(line);
-				root.addChild(lastNode);
+				lastNode = parseHeading(currentRoot, line);
+				currentRoot.addChild(lastNode);
 				return;
 			}
 			
 			// Github Extra: fenced code blocks
 			if(line.startsWith("```")) {
 				lastNode = parseFencedCodeBlock(line, "```");
-				root.addChild(lastNode);
+				currentRoot.addChild(lastNode);
 				return;
 			}
 			
 			// PHP Extra: fenced code blocks
 			if(line.startsWith("~~~")) {
 				lastNode = parseFencedCodeBlock(line, "~~~");
-				root.addChild(lastNode);
+				currentRoot.addChild(lastNode);
 				return;
 			}
 			
@@ -160,7 +161,7 @@ public class Parser {
 				}
 				
 				lastNode = new HRuleNode();
-				root.addChild(lastNode);
+				currentRoot.addChild(lastNode);
 				return;
 			}
 			
@@ -175,8 +176,8 @@ public class Parser {
 			
 			if(line.startsWith("* ")) {
 				// this is a list of data
-				lastNode = parseUnorderedList(line);
-				root.addChild(lastNode);
+				lastNode = parseUnorderedList(currentRoot, line);
+				currentRoot.addChild(lastNode);
 				return;
 			}
 		}
@@ -187,35 +188,48 @@ public class Parser {
 			Node codeNode = parseVerbatimBlock(line);
 			if(codeNode != null) {
 				lastNode = codeNode;
-				root.addChild(lastNode);
+				currentRoot.addChild(lastNode);
 				return;
 			}
 		}
 		
-		// check for starting 
+		// check for block quotes
+		// this is a block quote - remove the block quote symbol
+		// trim one space after this
+		// and then re-parse the line
+		if(!line.isEmpty() && line.charAt(leadingPosition) == Identifiers.HTML_OR_AUTOLINK_END) {
+			BlockQuoteNode blockQuoteNode = new BlockQuoteNode();
+			lastNode = blockQuoteNode;
+			
+			// parse the block
+			parseLine(blockQuoteNode, line.substring(leadingPosition + 1));
+			
+			currentRoot.addChild(blockQuoteNode);
+			return;
+		}
 		
 		// try and see if this is an ordered list
 		if(lineStartsWithNumber(line)) {
-			lastNode = parseOrderedList(line);
-			root.addChild(lastNode);
+			lastNode = parseOrderedList(currentRoot, line);
+			currentRoot.addChild(lastNode);
 			return;
 		}
 		
 		// check if line is empty
 		// if so, add a new line node
 		if(line.trim().isEmpty()) {
-			lastNode = new PlainTextNode(root, "\n");
-			root.addChild(lastNode);
+			lastNode = new PlainTextNode(currentRoot, "\n");
+			currentRoot.addChild(lastNode);
 			return;
 		}
 		
 		// parse the text line reading ahead as desired
-		lastNode = parseText(line, true);
-		root.addChild(lastNode);
+		lastNode = parseText(currentRoot, line, true);
+		currentRoot.addChild(lastNode);
 		
 		// there may be a new line that would have been read
 		if(this.line != null) {
-			parseLine(this.line);
+			parseLine(currentRoot, this.line);
 		}
 	}
 
@@ -327,7 +341,7 @@ public class Parser {
 		// extract any title if available
 		String[] tokens = MarkupUtils.parseLinkAndTitle(link);
 		
-		root.addReferenceLink(id, tokens[0].trim(), tokens[1]);
+		ROOT_NODE.addReferenceLink(id, tokens[0].trim(), tokens[1]);
 		return true;
 	}
 
@@ -338,13 +352,13 @@ public class Parser {
 	 * @return
 	 * @throws IOException
 	 */
-	private OrderedListNode parseOrderedList(String line) throws IOException {
+	private OrderedListNode parseOrderedList(Node currentRoot, String line) throws IOException {
 		OrderedListNode list = new OrderedListNode();
 		
 		do {
 			line = line.substring(1).trim();
 			
-			list.addChild(textNodeParser.parse(root, line));
+			list.addChild(textNodeParser.parse(currentRoot, line));
 
 			// read a new line
 			line = reader.readLine();
@@ -368,13 +382,13 @@ public class Parser {
 	 * @param line
 	 * @return
 	 */
-	private UnorderedListNode parseUnorderedList(String line) throws IOException {
+	private UnorderedListNode parseUnorderedList(Node currentRoot, String line) throws IOException {
 		UnorderedListNode list = new UnorderedListNode();
 		
 		do {
 			line = line.substring(1).trim();
 			
-			list.addChild(textNodeParser.parse(root, line));
+			list.addChild(textNodeParser.parse(currentRoot, line));
 
 			// read a new line
 			line = reader.readLine();
@@ -429,7 +443,7 @@ public class Parser {
 	 * @return
 	 * @throws Exception
 	 */
-	private HeadingNode parseHeading(String line) throws Exception {
+	private HeadingNode parseHeading(Node currentRoot, String line) throws Exception {
 		int headCount = 1;
 		int index = 1;
 		do {
@@ -457,7 +471,7 @@ public class Parser {
 		
 		line = line.substring(headCount, index).trim();
 		
-		Node textNode = parseText(line, false);
+		Node textNode = parseText(currentRoot, line, false);
 		HeadingNode heading = new HeadingNode(headCount, textNode);
 		return heading;
 	}
@@ -470,14 +484,14 @@ public class Parser {
 	 * @return
 	 * @throws Exception
 	 */
-	private Node parseText(String readLine, boolean fetchMoreLines) throws Exception {
+	private Node parseText(Node currentRoot, String readLine, boolean fetchMoreLines) throws Exception {
 		if(!fetchMoreLines) {
-			return textNodeParser.parse(root, readLine);
+			return textNodeParser.parse(currentRoot, readLine);
 		}
 		
 		if(readLine.isEmpty()) {
 			this.line = null;
-			return new ParagraphNode(root, "\n");
+			return new ParagraphNode(currentRoot, "\n");
 		}
 		
 		collector.setLength(0);
@@ -505,7 +519,7 @@ public class Parser {
 			readLine = line;
 		} while(true);
 		
-		return textNodeParser.parse(root, collector.toString());
+		return textNodeParser.parse(currentRoot, collector.toString());
 	}
 	
 }
