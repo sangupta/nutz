@@ -90,9 +90,9 @@ public class TextNodeParser implements Identifiers {
 				parseHtmlOrAutoLinkBlock();
 			}
 			
-			if(charAt(pos, CODE_MARKER) && !charAt(pos + 1, CODE_MARKER) && !charAt(pos - 1, ESCAPE_CHARACTER)) {
+			if(charAt(pos, CODE_MARKER) && !charAt(pos - 1, ESCAPE_CHARACTER)) {
 				clearPending();
-				parseCodeBlock();
+				parseCharacterBlock(CODE_MARKER);
 			}
 			
 			if(charAt(pos, EXCLAIMATION) && charAt(pos + 1, LINK_START)) {
@@ -107,12 +107,12 @@ public class TextNodeParser implements Identifiers {
 			
 			if(charAt(pos, ITALIC_OR_BOLD) && !charAt(pos - 1, ESCAPE_CHARACTER)) {
 				clearPending();
-				parseItalicOrBoldBlock(ITALIC_OR_BOLD);
+				parseCharacterBlock(ITALIC_OR_BOLD);
 			}
 			
 			if(charAt(pos, ITALIC_OR_BOLD_UNDERSCORE) && !charAt(pos - 1, ESCAPE_CHARACTER)) {
 				clearPending();
-				parseItalicOrBoldBlock(ITALIC_OR_BOLD_UNDERSCORE);
+				parseCharacterBlock(ITALIC_OR_BOLD_UNDERSCORE);
 			}
 
 			handleSpecialCharacters();
@@ -216,7 +216,7 @@ public class TextNodeParser implements Identifiers {
 		root.addChild(new XmlNode(line.substring(pos, index + end.length())));
 		
 		// reset
-		pos = index + end.length() + 1;
+		pos = index + end.length();
 		lastConverted = pos;
 	}
 
@@ -346,13 +346,14 @@ public class TextNodeParser implements Identifiers {
 		lastConverted = pos;
 	}
 
-	private void parseItalicOrBoldBlock(char terminator) {
+	private void parseCharacterBlock(final char terminator) {
 		int count = 1;
 
 		// count the total number of terminators available together
 		int index = 1;
 		do {
-			if(line.charAt(pos + index) == terminator) {
+			char c = line.charAt(pos + index);
+			if(c == terminator) {
 				index++;
 				count++;
 			} else {
@@ -362,12 +363,34 @@ public class TextNodeParser implements Identifiers {
 		
 		// now we need to find the total number of terminators after a non-terminator
 		// character
-		index = line.indexOf(terminator, pos + count);
+		index = pos + count;
+		
+		// instead of an indexOf - we need to go character by character
+		// this is because there may be escaping characters before the terminator
+		// and an escaper may be escaped itself
+		char c;
+		do {
+			c = line.charAt(index);
+			
+			if(c == ESCAPE_CHARACTER) {
+				index++;
+			} else if(c == terminator) {
+				break;
+			}
+			
+			index++;
+
+			if(index >= this.length) {
+				index = -1;
+				break;
+			}
+		} while(true);
+		
 		if(index == -1) {
 			// none available 
 			// we need to break only the available ones
 			// into nodes
-			convertBoldOrUnderlineTerminatorsToNode(count, terminator);
+			convertCharacterBlock(count, terminator);
 			
 			// reset
 			pos = pos + count;
@@ -375,8 +398,8 @@ public class TextNodeParser implements Identifiers {
 			
 			return;
 		}
-		
-		// this means that we found out another set of stars
+			
+		// this means that we found out another set of terminators
 		// let's find the total number of counts available here
 		int endCount = 1;
 		int checkIndex = 0;
@@ -397,35 +420,45 @@ public class TextNodeParser implements Identifiers {
 
 		// now we have the text that is between these starting and ending
 		// terminator string. convert this to markup
-		convertBoldOrUnderlineTerminatedToNode(count, endCount, text);
+		convertCharacterBlock(count, endCount, text, terminator);
 		
 		// reset
-		pos = index + endCount + 1;
+		pos = index + endCount;
 		lastConverted = pos;
 	}
 
-	private void convertBoldOrUnderlineTerminatedToNode(int startCount, int endCount, String text) {
-		if(startCount == endCount) {
-			switch(startCount) {
-				case 1:
-					// create an italic text node
-					root.addChild(new EmphasisNode(root, text));
-					return;
-					
-				case 2:
-					// create a strong node
-					root.addChild(new StrongNode(root, text));
-					return;
-
-				case 3:
-					StrongNode strongNode = new StrongNode(root);
-					EmphasisNode emphasisNode = new EmphasisNode(strongNode, text);
-					strongNode.setTextNode(emphasisNode);
-					root.addChild(strongNode);
-					return;
-			}
-		}
+	private void convertCharacterBlock(int startCount, int endCount, String text, final char terminator) {
+		switch(terminator) {
+			case ITALIC_OR_BOLD:
+			case ITALIC_OR_BOLD_UNDERSCORE:
+				if(startCount == endCount) {
+					switch(startCount) {
+						case 1:
+							// create an italic text node
+							root.addChild(new EmphasisNode(root, text));
+							return;
+							
+						case 2:
+							// create a strong node
+							root.addChild(new StrongNode(root, text));
+							return;
 		
+						case 3:
+							StrongNode strongNode = new StrongNode(root);
+							EmphasisNode emphasisNode = new EmphasisNode(strongNode, text);
+							strongNode.setTextNode(emphasisNode);
+							root.addChild(strongNode);
+							return;
+					}
+				}
+				break;
+				
+			case CODE_MARKER:
+				// create the node
+				root.addChild(new InlineCodeNode(root, text.trim()));
+				return;
+		}
+			
 		System.out.println("*** Unhandled: " + text + ":" + startCount + ", " + endCount);
 	}
 
@@ -436,7 +469,7 @@ public class TextNodeParser implements Identifiers {
 	 * 
 	 * @param count
 	 */
-	private void convertBoldOrUnderlineTerminatorsToNode(int count, char terminator) {
+	private void convertCharacterBlock(int count, char terminator) {
 		if(count <= 2) {
 			char[] array = new char[count];
 			Arrays.fill(array, terminator);
@@ -461,39 +494,14 @@ public class TextNodeParser implements Identifiers {
 		}
 		lastConverted = pos;
 	}
-	
-	/**
-	 * Parse an inline code block
-	 * 
-	 */
-	private void parseCodeBlock() {
-		// this is a code block
-		int index = pos;
-		do {
-			index = line.indexOf(CODE_MARKER, index + 1);
-			if(index == -1) {
-				break;
-			}
-			
-			if(!charAt(index + 1, CODE_MARKER)) {
-				break;
-			} else {
-				index++;
-			}
-		} while(true);
-		
-		if(index == -1) {
-			index = line.length() - 1;
-		}
-		
-		// create the node
-		root.addChild(new InlineCodeNode(root, line.substring(pos + 1, index)));
 
-		// reset
-		pos = index + 1;
-		lastConverted = pos;
-	}
-	
+	/**
+	 * Test if the character at given position is same as supplied one.
+	 * 
+	 * @param pos
+	 * @param character
+	 * @return
+	 */
 	private boolean charAt(int pos, char character) {
 		if(pos < 0) {
 			return false;
