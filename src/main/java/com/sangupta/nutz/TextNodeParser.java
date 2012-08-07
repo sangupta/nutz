@@ -538,7 +538,14 @@ public class TextNodeParser implements Identifiers {
 		if(count <= 2) {
 			char[] array = new char[count];
 			Arrays.fill(array, terminator);
-			root.addChild(new PlainTextNode(root, String.valueOf(array)));
+			
+			// let's fill this in the previous plain text node if present
+			if(root.hasChild() && (root.lastNode() instanceof PlainTextNode)) {
+				PlainTextNode node = (PlainTextNode) root.lastNode();
+				node.appendText(String.valueOf(array));
+			} else {
+				root.addChild(new PlainTextNode(root, String.valueOf(array)));
+			}
 		}
 		
 		// TODO: we still need to convert these terminators

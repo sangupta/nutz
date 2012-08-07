@@ -37,6 +37,10 @@ public class PlainTextNode extends TextNode {
 		this.text = text;
 	}
 	
+	public void appendText(String text) {
+		this.text = this.text + text;
+	}
+	
 	@Override
 	public void write(StringBuilder builder, boolean atRootNode, Map<String, AnchorNode> referenceLinks) {
 		builder.append(this.text);
