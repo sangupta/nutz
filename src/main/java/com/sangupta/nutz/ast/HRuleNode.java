@@ -33,6 +33,8 @@ public class HRuleNode extends Node {
 	@Override
 	public void write(StringBuilder builder, boolean atRootNode, Map<String, AnchorNode> referenceLinks) {
 		builder.append("<hr />");
+		builder.append(NEW_LINE);
+		builder.append(NEW_LINE);
 	}
 
 	@Override

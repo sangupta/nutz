@@ -60,4 +60,6 @@ public interface Identifiers {
 	
 	public static final char AMPERSAND = '&';
 	
+	public static final char TAB = '\t';
+	
 }

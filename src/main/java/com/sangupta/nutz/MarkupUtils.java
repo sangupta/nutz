@@ -190,5 +190,31 @@ public class MarkupUtils {
 		
 		return -1;
 	}
+	
+	/**
+	 * Check if the given line contains only spaces and the given character
+	 * 
+	 * @param line
+	 * @param character
+	 * @return
+	 */
+	public static boolean isOnlySpaceAndCharacter(String line, char character) {
+		char[] array = line.toCharArray();
+		for(int index = 0; index < array.length; index++) {
+			char c = array[index];
+			switch(c) {
+				case Identifiers.SPACE:
+				case Identifiers.TAB:
+					continue;
+					
+				default:
+					if(c != character) {
+						return false;
+					}
+			}
+		}
+		
+		return true;
+	}
 
 }

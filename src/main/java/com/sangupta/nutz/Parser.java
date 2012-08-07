@@ -178,7 +178,7 @@ public class Parser {
 				}
 			}
 			
-			if(line.startsWith("* ")) {
+			if(line.startsWith("* ") && !MarkupUtils.isOnlySpaceAndCharacter(line, '*')) {
 				// this is a list of data
 				lastNode = parseUnorderedList(currentRoot, line);
 				currentRoot.addChild(lastNode);
@@ -195,6 +195,13 @@ public class Parser {
 					return true;
 				}
 			}
+
+			// check for various forms of HRULE
+			boolean found = checkForVariousHorizontalRules(currentRoot, line, leadingPosition);
+			if(found) {
+				return true;
+			}
+			
 		} // leading spaces < 4
 		
 		// check for leading spaces
@@ -217,7 +224,7 @@ public class Parser {
 		// this is a block quote - remove the block quote symbol
 		// trim one space after this
 		// and then re-parse the line
-		if(!line.isEmpty() && line.charAt(leadingPosition) == Identifiers.HTML_OR_AUTOLINK_END) {
+		if(!line.isEmpty() && leadingPosition < line.length() && line.charAt(leadingPosition) == Identifiers.HTML_OR_AUTOLINK_END) {
 			BlockQuoteNode blockQuoteNode = new BlockQuoteNode();
 			lastNode = blockQuoteNode;
 			
@@ -253,6 +260,52 @@ public class Parser {
 		}
 		
 		return true;
+	}
+
+	private boolean checkForVariousHorizontalRules(Node currentRoot, String line, int leadingPosition) {
+		if(MarkupUtils.isOnlySpaceAndCharacter(line, '-')) {
+			if(line.startsWith("---", leadingPosition)) {
+				lastNode = new HRuleNode();
+				currentRoot.addChild(lastNode);
+				return true;
+			}
+	
+			if(line.startsWith("- - -", leadingPosition)) {
+				lastNode = new HRuleNode();
+				currentRoot.addChild(lastNode);
+				return true;
+			}
+		}
+
+		if(MarkupUtils.isOnlySpaceAndCharacter(line, '*')) {
+			if(line.startsWith("***", leadingPosition)) {
+				lastNode = new HRuleNode();
+				currentRoot.addChild(lastNode);
+				return true;
+			}
+	
+			if(line.startsWith("* * *", leadingPosition)) {
+				lastNode = new HRuleNode();
+				currentRoot.addChild(lastNode);
+				return true;
+			}
+		}
+		
+		if(MarkupUtils.isOnlySpaceAndCharacter(line, '_')) {
+			if(line.startsWith("___", leadingPosition)) {
+				lastNode = new HRuleNode();
+				currentRoot.addChild(lastNode);
+				return true;
+			}
+	
+			if(line.startsWith("_ _ _", leadingPosition)) {
+				lastNode = new HRuleNode();
+				currentRoot.addChild(lastNode);
+				return true;
+			}
+		}
+		
+		return false;
 	}
 
 	/**

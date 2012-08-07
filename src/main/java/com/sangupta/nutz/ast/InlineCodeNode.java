@@ -23,6 +23,8 @@ package com.sangupta.nutz.ast;
 
 import java.util.Map;
 
+import com.sangupta.nutz.HtmlEscapeUtils;
+
 /**
  * 
  * @author sangupta
@@ -40,7 +42,7 @@ public class InlineCodeNode extends TextNode {
 	@Override
 	public void write(StringBuilder builder, boolean atRootNode, Map<String, AnchorNode> referenceLinks) {
 		builder.append("<code>");
-		builder.append(this.code);
+		HtmlEscapeUtils.writeEscapedLine(this.code, builder);
 		builder.append("</code>");
 	}
 

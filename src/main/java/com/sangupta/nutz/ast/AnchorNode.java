@@ -23,7 +23,7 @@ package com.sangupta.nutz.ast;
 
 import java.util.Map;
 
-import com.sangupta.nutz.Identifiers;
+import com.sangupta.nutz.HtmlEscapeUtils;
 import com.sangupta.nutz.TextNodeParser;
 
 /**
@@ -76,21 +76,8 @@ public class AnchorNode extends TextNode {
 		// check for title
 		if(this.title != null) {
 			builder.append(" title=\"");
-			
-			char ch;
-			char[] array = this.title.toCharArray();
-			for(int index = 0; index < array.length; index++) {
-				ch = array[index];
-				switch(ch) {
-					case Identifiers.AMPERSAND:
-						builder.append("&amp;");
-						break;
-						
-					default:
-						builder.append(ch);
-						break;
-				}
-			}
+
+			HtmlEscapeUtils.writeEscapedLine(this.title, builder);
 			
 			builder.append("\"");
 		}
