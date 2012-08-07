@@ -38,9 +38,11 @@ public class RandomProcessorTest {
 	public static void main(String[] args) throws Exception {
 		String s2 = "src/main/resources/markdown_home_page.md";
 		
-		String fileName = "Auto links";
+		String fileName = "Images";
 		String s3 = "src/test/resources/markdown/" + fileName + ".text";
 		String o3 = "src/test/resources/markdown/" + fileName + ".html";
+		
+		String markup1 = "* * *";
 		
 		File file = new File(s3);
 		String markup = FileUtils.readFileToString(file);
@@ -55,7 +57,12 @@ public class RandomProcessorTest {
 		String out = FileUtils.readFileToString(new File(o3));
 		FileUtils.write(new File("C:/users/sangupta/desktop/markdownTest.html"), html);
 		
-		System.out.println("HTML Equals: " + HTMLComparer.compareHtml(out, html));
+		boolean htmlEquals = HTMLComparer.compareHtml(out, html);
+		System.out.println("HTML Equals: " + htmlEquals);
+		
+		if(!htmlEquals && html.length() < 100) {
+			System.out.println("HTML: " + html);
+		}
 	}
 	
 }

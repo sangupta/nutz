@@ -62,4 +62,6 @@ public interface Identifiers {
 	
 	public static final char TAB = '\t';
 	
+	public static final char HYPHEN = '-';
+	
 }

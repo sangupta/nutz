@@ -85,6 +85,10 @@ public class ParagraphNode extends TextNode {
 		}
 		
 		if(this.children.size() == 1) {
+			if(this.children.get(0) instanceof HtmlCommentNode) {
+				atRootNode = false;
+			}
+			
 			if(atRootNode) {
 				builder.append("<p>");
 			}

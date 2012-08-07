@@ -76,12 +76,14 @@ public class ImageNode extends Node {
 			this.title = "";
 		}
 		
-		builder.append(" title=\"");
-		builder.append(this.title);
-		builder.append("\"");
+		if(!onID || !this.title.isEmpty()) {
+			builder.append(" title=\"");
+			builder.append(this.title);
+			builder.append("\"");
+		}
 		
 		// close the tag
-		builder.append("/>");
+		builder.append(" />");
 	}
 	
 	@Override

@@ -26,6 +26,7 @@ import java.util.Arrays;
 import com.sangupta.nutz.ast.AnchorNode;
 import com.sangupta.nutz.ast.EmailNode;
 import com.sangupta.nutz.ast.EmphasisNode;
+import com.sangupta.nutz.ast.HtmlCommentNode;
 import com.sangupta.nutz.ast.ImageNode;
 import com.sangupta.nutz.ast.InlineCodeNode;
 import com.sangupta.nutz.ast.Node;
@@ -87,7 +88,12 @@ public class TextNodeParser implements Identifiers {
 			
 			if(charAt(pos, HTML_OR_AUTOLINK_START)) {
 				clearPending();
-				parseHtmlOrAutoLinkBlock();
+				
+				if(charAt(pos + 1, EXCLAIMATION) && charAt(pos + 2, HYPHEN) && charAt(pos + 3, HYPHEN)) {
+					parseInlineHTMLComment();
+				} else {
+					parseHtmlOrAutoLinkBlock();
+				}
 			}
 			
 			if(charAt(pos, CODE_MARKER) && !charAt(pos - 1, ESCAPE_CHARACTER)) {
@@ -160,6 +166,21 @@ public class TextNodeParser implements Identifiers {
 			pos++;
 			lastConverted = pos;
 		}
+	}
+	
+	private void parseInlineHTMLComment() {
+		int index = pos + 3;
+		index = line.indexOf("-->", index);
+		if(index == -1) {
+			return;
+		}
+		
+		String text = line.substring(pos, index + 3);
+		root.addChild(new HtmlCommentNode(text));
+		
+		// reset
+		pos = index + 3;
+		lastConverted = pos;
 	}
 	
 	/**

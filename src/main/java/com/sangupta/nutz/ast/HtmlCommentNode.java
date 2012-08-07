@@ -28,23 +28,17 @@ import java.util.Map;
  * @author sangupta
  *
  */
-public class BlockQuoteNode extends Node {
+public class HtmlCommentNode extends Node {
+	
+	private String text;
+	
+	public HtmlCommentNode(String text) {
+		this.text = text;
+	}
 	
 	@Override
 	public void write(StringBuilder builder, boolean atRootNode, Map<String, AnchorNode> referenceLinks) {
-		if(this.children == null || this.children.isEmpty()) {
-			return;
-		}
-		
-		builder.append("<blockquote>");
-		builder.append(NEW_LINE);
-		
-		for(Node child : this.children) {
-			child.write(builder, atRootNode, referenceLinks);
-		}
-		
-		builder.append(NEW_LINE);
-		builder.append("</blockquote>");
+		builder.append(this.text);
 	}
 
 }
