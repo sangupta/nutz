@@ -52,6 +52,22 @@ public abstract class Node {
 		this.children.add(node);
 	}
 	
+	public boolean hasChild() {
+		if(this.children != null && !this.children.isEmpty()) {
+			return true;
+		}
+		
+		return false;
+	}
+	
+	public Node lastNode() {
+		if(hasChild()) {
+			return this.children.get(this.children.size() - 1);
+		}
+		
+		return null;
+	}
+	
 	/**
 	 * Replace the older node with the newer node
 	 * 

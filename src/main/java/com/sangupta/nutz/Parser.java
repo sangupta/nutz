@@ -78,6 +78,11 @@ public class Parser {
 	private final TextNodeParser textNodeParser = new TextNodeParser();
 	
 	/**
+	 * Maintains the depth of blockquotes nesting
+	 */
+	private int blockDepth = 0;
+	
+	/**
 	 * Public function that parses and creates an AST of the given markup.
 	 * 
 	 * @param markup
@@ -89,6 +94,35 @@ public class Parser {
 		readLines(ROOT_NODE);
 		
 		return ROOT_NODE;
+	}
+	
+	private String readLine() throws IOException {
+		String line = reader.readLine();
+		
+		if(line == null) {
+			return null;
+		}
+		
+		if(this.blockDepth > 0) {
+			int length = line.length();
+			int found = 0;
+			for(int index = 0; index < length; index++) {
+				if(line.charAt(index) == Identifiers.HTML_OR_AUTOLINK_END) {
+					found++;
+				}
+				
+				if(found == this.blockDepth) {
+					if(line.charAt(index + 1) == Identifiers.SPACE) {
+						index++;
+					}
+					
+					line = line.substring(index + 1);
+					break;
+				}
+			}
+		}
+		
+		return line;
 	}
 	
 	/**
@@ -178,7 +212,7 @@ public class Parser {
 				}
 			}
 			
-			if(line.startsWith("* ") && !MarkupUtils.isOnlySpaceAndCharacter(line, '*')) {
+			if((line.startsWith("* ") || line.startsWith("*\t")) && !MarkupUtils.isOnlySpaceAndCharacter(line, '*')) {
 				// this is a list of data
 				lastNode = parseUnorderedList(currentRoot, line);
 				currentRoot.addChild(lastNode);
@@ -225,13 +259,27 @@ public class Parser {
 		// trim one space after this
 		// and then re-parse the line
 		if(!line.isEmpty() && leadingPosition < line.length() && line.charAt(leadingPosition) == Identifiers.HTML_OR_AUTOLINK_END) {
-			BlockQuoteNode blockQuoteNode = new BlockQuoteNode();
+			BlockQuoteNode blockQuoteNode;
+			if(currentRoot.hasChild() && (currentRoot.lastNode() instanceof BlockQuoteNode)) {
+				blockQuoteNode = (BlockQuoteNode) currentRoot.lastNode();
+			} else {
+				blockQuoteNode = new BlockQuoteNode();
+				currentRoot.addChild(blockQuoteNode);
+			}
+
 			lastNode = blockQuoteNode;
-			
+
 			// parse the block
-			parseLine(blockQuoteNode, line.substring(leadingPosition + 1));
+			this.blockDepth++;
 			
-			currentRoot.addChild(blockQuoteNode);
+			String temp = line.substring(leadingPosition + 1);
+			if(temp.charAt(0) == Identifiers.SPACE) {
+				temp = temp.substring(1);
+			}
+			parseLine(blockQuoteNode, temp);
+			this.blockDepth--;
+			
+			// save the node
 			return true;
 		}
 		
@@ -354,7 +402,7 @@ public class Parser {
 			
 			// read one more line
 			firstLine = false;
-			line = reader.readLine();
+			line = readLine();
 			if(line == null) {
 				break;
 			}
@@ -439,7 +487,7 @@ public class Parser {
 			list.addChild(textNodeParser.parse(currentRoot, line));
 
 			// read a new line
-			line = reader.readLine();
+			line = readLine();
 			
 			if(line == null) {
 				break;
@@ -469,7 +517,7 @@ public class Parser {
 			list.addChild(textNodeParser.parse(currentRoot, line));
 
 			// read a new line
-			line = reader.readLine();
+			line = readLine();
 			
 			if(line == null) {
 				break;
@@ -583,8 +631,8 @@ public class Parser {
 			collector.append(readLine);
 			collector.append('\n');
 
-			line = reader.readLine();
-			if(line == null) {
+			line = readLine();
+			if(line == null || line.isEmpty()) {
 				break;
 			}
 			
