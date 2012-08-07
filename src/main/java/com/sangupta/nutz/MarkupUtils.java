@@ -21,6 +21,8 @@
 
 package com.sangupta.nutz;
 
+import java.util.Arrays;
+
 /**
  * Utility functions used when constructing the Abstract Syntax Tree
  * of the markup presented.
@@ -215,6 +217,19 @@ public class MarkupUtils {
 		}
 		
 		return true;
+	}
+	
+	public static int indexOfMultiple(String line, char character, int count, int startIndex) {
+		if(count == 1) {
+			return line.indexOf(character, startIndex);
+		}
+		
+		char[] array = new char[count];
+		Arrays.fill(array, character);
+		
+		String search = String.valueOf(array);
+		
+		return line.indexOf(search, startIndex);
 	}
 
 }

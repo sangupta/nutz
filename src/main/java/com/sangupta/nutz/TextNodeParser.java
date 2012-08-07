@@ -398,56 +398,67 @@ public class TextNodeParser implements Identifiers {
 		// character
 		index = pos + count;
 		
-		// instead of an indexOf - we need to go character by character
-		// this is because there may be escaping characters before the terminator
-		// and an escaper may be escaped itself
-		char c;
-		do {
-			c = line.charAt(index);
-			
-			if(c == ESCAPE_CHARACTER) {
-				index++;
-			} else if(c == terminator) {
-				break;
-			}
-			
-			index++;
-
-			if(index >= this.length) {
-				index = -1;
-				break;
-			}
-		} while(true);
+		// first let's see if we have a string of count characters
+		// of the terminator available
+		// if yes, we need to use that than finding and counting
+		int endCount = 0;
+		int indexMultiple = MarkupUtils.indexOfMultiple(line, terminator, count, index);
 		
-		if(index == -1) {
-			// none available 
-			// we need to break only the available ones
-			// into nodes
-			convertCharacterBlock(count, terminator);
+		if(indexMultiple != -1) {
+			index = indexMultiple;
+			endCount = count;
+		} else {
+			// instead of an indexOf - we need to go character by character
+			// this is because there may be escaping characters before the terminator
+			// and an escaper may be escaped itself
+			char c;
+			do {
+				c = line.charAt(index);
+				
+				if(c == ESCAPE_CHARACTER) {
+					index++;
+				} else if(c == terminator) {
+					break;
+				}
+				
+				index++;
+	
+				if(index >= this.length) {
+					index = -1;
+					break;
+				}
+			} while(true);
 			
-			// reset
-			pos = pos + count;
-			lastConverted = pos;
-			
-			return;
+			if(index == -1) {
+				// none available 
+				// we need to break only the available ones
+				// into nodes
+				convertCharacterBlock(count, terminator);
+				
+				// reset
+				pos = pos + count;
+				lastConverted = pos;
+				
+				return;
+			}
+				
+			// this means that we found out another set of terminators
+			// let's find the total number of counts available here
+			endCount = 1;
+			int checkIndex = 0;
+			do {
+				checkIndex = index + endCount;
+				if(checkIndex == this.length) {
+					break;
+				}
+				
+				if(line.charAt(checkIndex) == terminator) {
+					endCount++;
+				} else {
+					break;
+				}
+			} while(true);
 		}
-			
-		// this means that we found out another set of terminators
-		// let's find the total number of counts available here
-		int endCount = 1;
-		int checkIndex = 0;
-		do {
-			checkIndex = index + endCount;
-			if(checkIndex == this.length) {
-				break;
-			}
-			
-			if(line.charAt(checkIndex) == terminator) {
-				endCount++;
-			} else {
-				break;
-			}
-		} while(true);
 		
 		String text = line.substring(pos + count, index);
 
