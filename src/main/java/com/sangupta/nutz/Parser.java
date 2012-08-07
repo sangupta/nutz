@@ -276,11 +276,26 @@ public class Parser {
 			if(temp.charAt(0) == Identifiers.SPACE) {
 				temp = temp.substring(1);
 			}
-			parseLine(blockQuoteNode, temp);
+			
+			boolean returnValue = parseLine(blockQuoteNode, temp);
+			
+			// if we need to parse the previous line
+			// again, we need to pre-pend the blockquote
+			// characters again
+			// to make sure that it gets picked up
+			if(!returnValue && this.line != null) {
+				// append back the characters found
+				temp = this.line;
+				for(int j = 0; j < this.blockDepth; j++) {
+					temp = "> " + temp;
+				}
+				
+				this.line = temp;
+			}
 			this.blockDepth--;
 			
 			// save the node
-			return true;
+			return returnValue;
 		}
 		
 		// try and see if this is an ordered list
