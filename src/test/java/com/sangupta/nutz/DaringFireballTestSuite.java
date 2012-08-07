@@ -54,6 +54,8 @@ public class DaringFireballTestSuite {
 		int testsPass = 0;
 		int testsFail = 0;
 		
+		long totalTime = 0;
+		
 		for(File file : tests) {
 			String output = file.getAbsolutePath();
 			output = output.replace(".text", ".html");
@@ -64,6 +66,7 @@ public class DaringFireballTestSuite {
 			
 			String html = null;
 
+			long start = System.currentTimeMillis();
 			try {
 				html = processor.toHtml(markup);
 			} catch(Throwable t) {
@@ -72,6 +75,9 @@ public class DaringFireballTestSuite {
 				testsFail++;
 				continue;
 			}
+			long end = System.currentTimeMillis();
+			
+			totalTime += (end - start);
 			
 			if(HTMLComparer.compareHtml(output, html)) {
 				System.out.println("Test PASS: " + file.getAbsolutePath());
@@ -83,6 +89,7 @@ public class DaringFireballTestSuite {
 		}
 		
 		System.out.println("\n\n\n\nTests pass: " + testsPass + "; fail: " + testsFail);
+		System.out.println("Total time: " + totalTime + " ms.");
 	}
 	
 }
