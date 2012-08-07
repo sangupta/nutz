@@ -100,7 +100,7 @@ public class MarkupUtils {
 		// this is a present for Daring Fireball test for 'Amps and angle encoding.text'
 		// test
 		String token = tokens[0];
-		if(token.charAt(0) == '<' && token.charAt(token.length() - 1) == '>') {
+		if(!token.isEmpty() && token.charAt(0) == '<' && token.charAt(token.length() - 1) == '>') {
 			tokens[0] = token.substring(1, token.length() - 1);
 		}
 		
@@ -153,6 +153,42 @@ public class MarkupUtils {
 		array[1] = spaces;
 		
 		return array;
+	}
+	
+	/**
+	 * Finds the index of specified terminator character, counting greedily and skipping closing terminators
+	 * when the pair terminator is found.
+	 *  
+	 * @param line
+	 * @param ch
+	 * @param startIndex
+	 * @return
+	 */
+	public static int indexOfSkippingForPairCharacter(String line, char terminator, char terminatorPair, int startIndex) {
+		char[] array = line.toCharArray();
+		
+		int length = array.length;
+		int open = 1;
+		
+		do {
+			char c = array[startIndex++];
+			
+			if(c == terminator) {
+				open--;
+			} else if(c == terminatorPair) {
+				open++;
+			}
+			
+			if(open == 0) {
+				return startIndex - 1;
+			}
+			
+			if(startIndex == length) {
+				break;
+			}
+		} while(true);
+		
+		return -1;
 	}
 
 }

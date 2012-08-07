@@ -171,7 +171,7 @@ public class Parser {
 			
 			if(line.startsWith("[")) {
 				// parse an inline link reference
-				boolean found = parseLinkReference(line);
+				boolean found = parseLinkReference(line, leadingPosition);
 				if(found) {
 					lastNode = null;
 					return true;
@@ -184,7 +184,18 @@ public class Parser {
 				currentRoot.addChild(lastNode);
 				return true;
 			}
-		}
+		} /// leading spaces == 0
+		
+		if(leadingSpaces < 4) {
+			// check for reference links starts with
+			if(line.startsWith("[", leadingPosition)) {
+				boolean found = parseLinkReference(line, leadingPosition);
+				if(found) {
+					lastNode = null;
+					return true;
+				}
+			}
+		} // leading spaces < 4
 		
 		// check for leading spaces
 		if(leadingSpaces >= 4) {
@@ -339,7 +350,7 @@ public class Parser {
 	 * @param line
 	 * @return
 	 */
-	private boolean parseLinkReference(String line) {
+	private boolean parseLinkReference(String line, int leadingPosition) {
 		int index = line.indexOf(']');
 		if(index == -1) {
 			return false;
@@ -349,7 +360,7 @@ public class Parser {
 			return false;
 		}
 		
-		String id = line.substring(1, index);
+		String id = line.substring(leadingPosition + 1, index);
 		String link = line.substring(index + 2).trim();
 		
 		// extract any title if available

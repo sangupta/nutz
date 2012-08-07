@@ -220,6 +220,12 @@ public class TextNodeParser implements Identifiers {
 		lastConverted = pos;
 	}
 
+	/**
+	 * Extract the tagname from the given HTML markup.
+	 * 
+	 * @param markup
+	 * @return
+	 */
 	private String extractTagName(String markup) {
 		int index = markup.indexOf(SPACE);
 		if(index == -1) {
@@ -234,30 +240,57 @@ public class TextNodeParser implements Identifiers {
 	 * 
 	 */
 	private void parseImageBlock() {
-		// TODO Auto-generated method stub
 		int index = line.indexOf(LINK_END, pos + 2); // 2 because we have just matched two characters
 		if(index == -1) {
 			// not an image
 			return;
 		}
 		
-		if(!charAt(index + 1, HREF_START)) {
-			// no image url present
+		String alternateText = line.substring(pos + 2, index);
+		pos = ++index;
+		
+		// either a URL would be specified
+		// or a reference to another hyperlink
+		// would be provided
+		char ch = line.charAt(index++);
+		while(ch == SPACE) {
+			ch = line.charAt(index++);
+		}
+
+		if(ch != HREF_START && ch != LINK_START) {
+			// this is not a hyperlink
+			// just plainly exit the loop
 			return;
 		}
-		
-		String title = line.substring(pos + 2, index);
-		pos = index + 1;
-		
-		index = line.indexOf(HREF_END, index + 2);
-		if(index == -1) {
-			return;
+
+		if(ch == HREF_START) {
+			// we do allow empty URLs - this is a test in Daring Fireball's test suite
+			index = MarkupUtils.indexOfSkippingForPairCharacter(line, HREF_END, HREF_START, index);
+			if(index == -1) {
+				return;
+			}
+			
+			String link = line.substring(pos + 1, index);
+			
+			// break this link into link and title
+			String[] tokens = MarkupUtils.parseLinkAndTitle(link);
+			
+			// create the node
+			root.addChild(new ImageNode(tokens[0], alternateText, tokens[1]));
+		} else if(ch == LINK_START) {
+			// this is the text
+			index = line.indexOf(LINK_END, index + 1);
+			if(index == -1) {
+				// not a reference link
+				return;
+			}
+			
+			// extract the identifier
+			String identifier = line.substring(pos + 1, index);
+			
+			// create the node
+			root.addChild(new ImageNode(identifier, alternateText, true));
 		}
-		
-		String link = line.substring(pos + 1, index);
-		
-		// create the node
-		root.addChild(new ImageNode(link, title));
 		
 		// reset
 		pos = index + 1;

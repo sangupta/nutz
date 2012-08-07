@@ -32,28 +32,56 @@ public class ImageNode extends Node {
 	
 	private String url;
 	
+	private String alternateText;
+	
 	private String title;
 	
-	public ImageNode(String url, String title) {
+	private boolean onID;
+	
+	public ImageNode(String url, String alternateText, boolean onID) {
 		this.url = url;
+		this.alternateText = alternateText;
+		this.onID = onID;
+	}
+	
+	public ImageNode(String url, String alternateText, String title) {
+		this(url, alternateText, false);
 		this.title = title;
 	}
 	
 	@Override
 	public void write(StringBuilder builder, boolean atRootNode, Map<String, AnchorNode> referenceLinks) {
+		if(onID) {
+			AnchorNode node = referenceLinks.get(this.url);
+			if(node != null) {
+				this.url = node.getUrl();
+				this.title = node.getTitle();
+			}
+		}
+		
+		
 		builder.append("<img src=\"");
-		builder.append(this.url);
+		builder.append(url);
 		builder.append("\"");
 		
 		// check for alternate value
-		if(this.title != null) {
+		if(this.alternateText != null) {
 			builder.append(" alt=\"");
-			builder.append(this.title);
+			builder.append(this.alternateText);
 			builder.append("\"");
 		}
 		
-		builder.append("/>");
+		// always add a title
+		if(this.title == null) {
+			this.title = "";
+		}
 		
+		builder.append(" title=\"");
+		builder.append(this.title);
+		builder.append("\"");
+		
+		// close the tag
+		builder.append("/>");
 	}
 	
 	@Override

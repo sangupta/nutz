@@ -88,5 +88,12 @@ public class MarkupUtilsTest {
 		Assert.assertEquals(3, tokens[0]);
 		Assert.assertEquals(6, tokens[1]);
 	}
+	
+	@Test
+	public void testIndexOfSkippingForPairCharacter() {
+		Assert.assertEquals(7, MarkupUtils.indexOfSkippingForPairCharacter("(parens)", ')', '(', 1));
+		Assert.assertEquals(9, MarkupUtils.indexOfSkippingForPairCharacter("(p(aren)s)", ')', '(', 1));
+		
+	}
 
 }
