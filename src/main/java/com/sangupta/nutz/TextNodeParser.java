@@ -35,6 +35,7 @@ import com.sangupta.nutz.ast.PlainTextNode;
 import com.sangupta.nutz.ast.SpecialCharacterNode;
 import com.sangupta.nutz.ast.StrongNode;
 import com.sangupta.nutz.ast.TextNode;
+import com.sangupta.nutz.ast.UnreferencedAnchorNode;
 import com.sangupta.nutz.ast.XmlNode;
 
 /**
@@ -354,13 +355,23 @@ public class TextNodeParser implements Identifiers {
 		// or a reference to another hyperlink
 		// would be provided
 		char ch = line.charAt(index++);
+		int spaceCount = 0;
 		while(ch == SPACE) {
 			ch = line.charAt(index++);
+			spaceCount++;
 		}
 		
 		if(ch != HREF_START && ch != LINK_START) {
 			// this is not a hyperlink
-			// just plainly exit the loop
+			// but it may be a candidate for the unreferenced
+			// anchor node - create a node and exit
+			root.addChild(new UnreferencedAnchorNode(linkText));
+			
+			// reset
+			pos = index - 1 - spaceCount;
+			lastConverted = pos;
+			
+			// exit
 			return;
 		}
 		
