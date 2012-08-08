@@ -51,6 +51,11 @@ public class PlainTextNode extends TextNode {
 			return;
 		} 
 	}
+	
+	@Override
+	public String getPlainText() {
+		return this.text;
+	}
 
 	/**
 	 * @return the text

@@ -46,6 +46,10 @@ public class HtmlEscapeUtils {
 					builder.append("&gt;");
 					break;
 					
+				case '"':
+					builder.append("&quot;");
+					break;
+					
 				default:
 					builder.append(ch);
 					break;

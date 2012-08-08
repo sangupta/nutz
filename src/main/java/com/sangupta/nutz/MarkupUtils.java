@@ -91,7 +91,7 @@ public class MarkupUtils {
 				int pos = index;
 
 				// find next quotes
-				index = text.indexOf(Identifiers.DOUBLE_QUOTES, 1);
+				index = text.lastIndexOf(Identifiers.DOUBLE_QUOTES);
 				if(index == -1) {
 					// none found
 					index = text.length(); 

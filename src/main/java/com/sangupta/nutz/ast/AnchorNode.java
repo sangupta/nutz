@@ -24,6 +24,7 @@ package com.sangupta.nutz.ast;
 import java.util.Map;
 
 import com.sangupta.nutz.HtmlEscapeUtils;
+import com.sangupta.nutz.Identifiers;
 import com.sangupta.nutz.TextNodeParser;
 
 /**
@@ -41,6 +42,8 @@ public class AnchorNode extends TextNode {
 	
 	private boolean onID;
 	
+	private int spaces;
+	
 	public AnchorNode(Node parent, String url) {
 		super(parent);
 		this.text = null;
@@ -48,28 +51,57 @@ public class AnchorNode extends TextNode {
 		this.title = null;
 	}
 	
-	public AnchorNode(Node parent, String text, String url, String title, boolean onID) {
+	public AnchorNode(Node parent, String text, String url, String title, boolean onID, int spaces) {
 		super(parent);
 		if(text != null) {
-			this.text = new TextNodeParser().parse(this, text);
+			TextNode node = new TextNodeParser().parse(this, text);
+			this.text = node;
 		}
+		
 		this.url = url;
 		this.title = title;
 		this.onID = onID;
+		this.spaces = spaces;
 	}
 	
 	@Override
 	public void write(StringBuilder builder, boolean atRootNode, Map<String, AnchorNode> referenceLinks) {
-		builder.append("<a href=\"");
-		
 		if(onID) {
-			AnchorNode anchor = referenceLinks.get(this.url);
-			if(anchor != null) {
-				this.url = anchor.getUrl();
-				this.title = anchor.getTitle();
+			AnchorNode anchor;
+			String identifier;
+			if(this.url.isEmpty()) {
+				identifier = this.text.getPlainText();
+			} else {
+				identifier = this.url;
 			}
+
+			anchor = referenceLinks.get(identifier);
+			
+			// if anchor is null
+			// we need to emit the original string
+			if(anchor == null) {
+				builder.append('[');
+				this.text.write(builder, false, referenceLinks);
+				builder.append(']');
+				
+				for(int i = 0; i < this.spaces; i++) {
+					builder.append(Identifiers.SPACE);
+				}
+				
+				builder.append('[');
+				builder.append(this.url);
+				builder.append(']');
+				
+				return;
+			}
+			
+			this.url = anchor.getUrl();
+			this.title = anchor.getTitle();
 		}
 
+		// start building the anchor
+		builder.append("<a href=\"");
+		
 		builder.append(this.url);
 		builder.append("\"");
 		

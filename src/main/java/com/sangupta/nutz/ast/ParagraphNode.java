@@ -84,12 +84,14 @@ public class ParagraphNode extends TextNode {
 			return;
 		}
 		
-		if(this.children.size() == 1) {
-			Node firstNode = firstNode();
+		Node firstNode = firstNode();
+		if(atRootNode) {
 			if(firstNode instanceof HtmlCommentNode || firstNode instanceof XmlNode) {
 				atRootNode = false;
 			}
-			
+		}
+
+		if(this.children.size() == 1) {
 			if(atRootNode) {
 				builder.append("<p>");
 			}
@@ -113,14 +115,19 @@ public class ParagraphNode extends TextNode {
 			return;
 		}
 		
-		builder.append("<p>");
+		if(atRootNode) {
+			builder.append("<p>");
+		}
+		
 		for(Node node : this.children) {
 			node.write(builder, atRootNode, referenceLinks);
 		}
 		
-		builder.append("</p>");
-		builder.append(NEW_LINE);
-		builder.append(NEW_LINE);
+		if(atRootNode) {
+			builder.append("</p>");
+			builder.append(NEW_LINE);
+			builder.append(NEW_LINE);
+		}
 	}
 	
 	@Override

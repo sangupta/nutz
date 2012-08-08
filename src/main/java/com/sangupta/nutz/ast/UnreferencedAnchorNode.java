@@ -3,6 +3,7 @@ package com.sangupta.nutz.ast;
 import java.util.Map;
 
 import com.sangupta.nutz.Identifiers;
+import com.sangupta.nutz.TextNodeParser;
 
 /**
  * Represents a probable unreferenced anchor node. If a reference
@@ -42,13 +43,17 @@ public class UnreferencedAnchorNode extends Node {
 		AnchorNode node = referenceLinks.get(this.text);
 		if(node == null) {
 			builder.append('[');
-			builder.append(this.text);
+			
+			// do this text via text parsing routine
+			TextNode textNode = new TextNodeParser().parse(this, this.text);
+			textNode.write(builder, false, referenceLinks);
 			builder.append(']');
+			
 			return;
 		}
 		
 		// do it via the anchor
-		AnchorNode newAnchor = new AnchorNode(null, this.text, node.getUrl(), node.getTitle(), false);
+		AnchorNode newAnchor = new AnchorNode(null, this.text, node.getUrl(), node.getTitle(), false, 0);
 		newAnchor.write(builder, atRootNode, referenceLinks);
 	}
 }

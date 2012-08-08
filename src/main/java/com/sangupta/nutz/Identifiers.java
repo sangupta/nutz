@@ -48,7 +48,7 @@ public interface Identifiers {
 	
 	public static final char ITALIC_OR_BOLD_UNDERSCORE = '_';
 	
-	public static final char DOUBLE_QUOTES = '\"';
+	public static final char DOUBLE_QUOTES = '"';
 	
 	public static final char EXCLAIMATION = '!';
 	

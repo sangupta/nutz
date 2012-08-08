@@ -59,7 +59,7 @@ public class RootNode extends Node {
 	}
 	
 	public void addReferenceLink(String id, String link, String title) {
-		this.referenceLinks.put(id, new AnchorNode(null, null, link, title, false));
+		this.referenceLinks.put(id, new AnchorNode(null, null, link, title, false, 0));
 	}
 	
 	public AnchorNode getLink(String id) {

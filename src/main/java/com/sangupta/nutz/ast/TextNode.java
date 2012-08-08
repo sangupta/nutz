@@ -41,4 +41,20 @@ public abstract class TextNode extends Node {
 		return parent;
 	}
 
+	public String getPlainText() {
+		StringBuilder builder = new StringBuilder(512);
+		
+		if(this.children != null) {
+			for(Node child : this.children) {
+				if(child instanceof TextNode) {
+					builder.append(((TextNode) child).getPlainText());
+				} else {
+					builder.append(child.toString());
+				}
+			}
+		}
+		
+		return builder.toString();
+	}
+
 }

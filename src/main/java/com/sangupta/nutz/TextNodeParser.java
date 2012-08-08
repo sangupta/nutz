@@ -107,7 +107,7 @@ public class TextNodeParser implements Identifiers {
 				parseImageBlock();
 			}
 			
-			if(charAt(pos, LINK_START)) {
+			if(charAt(pos, LINK_START) && !charAt(pos-1, ESCAPE_CHARACTER)) {
 				clearPending();
 				parseLink();
 			}
@@ -325,7 +325,7 @@ public class TextNodeParser implements Identifiers {
 	 * 
 	 */
 	private void parseLink() {
-		int index = line.indexOf(LINK_END, pos + 1);
+		int index = MarkupUtils.indexOfSkippingForPairCharacter(line, LINK_END, LINK_START, pos + 1); // line.indexOf(LINK_END, pos + 1);
 		
 		if(index == -1) {
 			// this is not a hyperlink
@@ -354,9 +354,27 @@ public class TextNodeParser implements Identifiers {
 		// either a URL would be specified
 		// or a reference to another hyperlink
 		// would be provided
+		
+		if(index >= line.length()) {
+			// this is the end of line
+			// means - this was an unreferenced anchor link
+			root.addChild(new UnreferencedAnchorNode(linkText));
+			
+			// reset
+			pos = index;
+			lastConverted = pos;
+			
+			// exit
+			return;
+		}
+		
 		char ch = line.charAt(index++);
 		int spaceCount = 0;
-		while(ch == SPACE) {
+		while(ch == SPACE || ch == '\n') {
+			if(index >= line.length()) {
+				break;
+			}
+			
 			ch = line.charAt(index++);
 			spaceCount++;
 		}
@@ -375,6 +393,9 @@ public class TextNodeParser implements Identifiers {
 			return;
 		}
 		
+		// move ahead in position
+		pos += spaceCount;
+		
 		if(ch == HREF_START) {
 			// extract the URL
 			index = MarkupUtils.indexOfSkippingForPairCharacter(line, HREF_END, HREF_START, index);
@@ -390,19 +411,19 @@ public class TextNodeParser implements Identifiers {
 			String[] tokens = MarkupUtils.parseLinkAndTitle(link);
 	
 			// create the node
-			AnchorNode anchorNode = new AnchorNode(root, linkText.trim(), tokens[0].trim(), tokens[1], false);
+			AnchorNode anchorNode = new AnchorNode(root, linkText.trim(), tokens[0].trim(), tokens[1], false, spaceCount);
 			root.addChild(anchorNode);
 		} else if(ch == LINK_START) {
 			// this is the text
-			index = line.indexOf(LINK_END, index + 1);
+			index = line.indexOf(LINK_END, index);
 			if(index == -1) {
 				// not a reference link
 				return;
 			}
 			
 			// extract the identifier
-			String identifier = line.substring(pos + 2, index);
-			AnchorNode anchorNode = new AnchorNode(root, linkText.trim(), identifier, null, true);
+			String identifier = line.substring(pos + 1, index);
+			AnchorNode anchorNode = new AnchorNode(root, linkText.trim(), identifier, null, true, spaceCount);
 			root.addChild(anchorNode);
 		}
 		
@@ -572,7 +593,7 @@ public class TextNodeParser implements Identifiers {
 			pos = this.length;
 		}
 		
-		if((lastConverted + 1) < pos) {
+		if((lastConverted + 1) <= pos) {
 			root.addChild(new PlainTextNode(root, line.substring(lastConverted, pos)));
 		}
 		lastConverted = pos;
