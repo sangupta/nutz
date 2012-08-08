@@ -124,6 +124,13 @@ public class ParagraphNode extends TextNode {
 		}
 		
 		for(Node node : this.children) {
+			if(node instanceof ParagraphNode) {
+				builder.append("</p>");
+				builder.append(NEW_LINE);
+				builder.append(NEW_LINE);
+				builder.append("<p>");
+			}
+			
 			node.write(builder, atRootNode, referenceLinks);
 		}
 		

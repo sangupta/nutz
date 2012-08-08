@@ -35,6 +35,7 @@ import com.sangupta.nutz.ast.OrderedListNode;
 import com.sangupta.nutz.ast.ParagraphNode;
 import com.sangupta.nutz.ast.PlainTextNode;
 import com.sangupta.nutz.ast.RootNode;
+import com.sangupta.nutz.ast.TextNode;
 import com.sangupta.nutz.ast.UnorderedListNode;
 
 /**
@@ -524,6 +525,7 @@ public class Parser {
 		}
 		
 		int trimLocation = 1;
+		boolean newLineEncountered = false;
 		
 		do {
 			trimLocation = 1;
@@ -562,6 +564,12 @@ public class Parser {
 						probablyBreak = true;
 					}
 				}
+				
+				if(!probablyBreak) {
+					newLineEncountered = false;
+				}
+			} else {
+				newLineEncountered = true;
 			}
 			
 			// this check ensures that we do not exit from creating a list item
@@ -571,14 +579,22 @@ public class Parser {
 				if(tokens[1] > trimLocation) {
 					// this is a continuation
 					// add the text to previous node
-					List<Node> nodes = textNodeParser.parse(listNode, line).getChildren();
-					for(Node child : nodes) {
-						listNode.lastNode().addChild(child);
+					TextNode textNode = textNodeParser.parse(listNode, line);
+					
+					if(newLineEncountered) {
+						listNode.lastNode().addChild(textNode);
+					} else {
+						List<Node> nodes = textNode.getChildren();
+						for(Node child : nodes) {
+							listNode.lastNode().addChild(child);
+						}
 					}
 					line = "";
 				} else {
 					break;
 				}
+				
+				newLineEncountered = false;
 			}
 		} while(true);
 		
