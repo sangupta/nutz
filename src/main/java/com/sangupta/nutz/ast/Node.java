@@ -60,6 +60,14 @@ public abstract class Node {
 		return false;
 	}
 	
+	public Node firstNode() {
+		if(hasChild()) {
+			return this.children.get(0);
+		}
+		
+		return null;
+	}
+	
 	public Node lastNode() {
 		if(hasChild()) {
 			return this.children.get(this.children.size() - 1);

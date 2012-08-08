@@ -85,7 +85,8 @@ public class ParagraphNode extends TextNode {
 		}
 		
 		if(this.children.size() == 1) {
-			if(this.children.get(0) instanceof HtmlCommentNode) {
+			Node firstNode = firstNode();
+			if(firstNode instanceof HtmlCommentNode || firstNode instanceof XmlNode) {
 				atRootNode = false;
 			}
 			
@@ -94,6 +95,14 @@ public class ParagraphNode extends TextNode {
 			}
 			
 			this.children.get(0).write(builder, atRootNode, referenceLinks);
+			
+			// The following is only needed for
+			// tidy purposes and can be skipped to 
+			// pace up
+			if(firstNode instanceof XmlNode) {
+				builder.append(NEW_LINE);
+				builder.append(NEW_LINE);
+			}
 			
 			if(atRootNode) {
 				builder.append("</p>");

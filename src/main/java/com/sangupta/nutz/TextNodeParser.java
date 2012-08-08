@@ -240,7 +240,7 @@ public class TextNodeParser implements Identifiers {
 		pos = index + end.length();
 		lastConverted = pos;
 	}
-
+	
 	/**
 	 * Extract the tagname from the given HTML markup.
 	 * 
@@ -366,7 +366,7 @@ public class TextNodeParser implements Identifiers {
 		
 		if(ch == HREF_START) {
 			// extract the URL
-			index = line.indexOf(HREF_END, index + 1);
+			index = MarkupUtils.indexOfSkippingForPairCharacter(line, HREF_END, HREF_START, index);
 			if(index == -1) {
 				// not a hyperlink
 				return;

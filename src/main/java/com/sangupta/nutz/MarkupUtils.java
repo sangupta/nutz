@@ -77,6 +77,12 @@ public class MarkupUtils {
 		String[] tokens = new String[2];
 
 		int index = link.indexOf(Identifiers.SPACE);
+		int tabIndex = link.indexOf(Identifiers.TAB);
+		
+		if(tabIndex >= 0 && tabIndex < index) {
+			index = tabIndex;
+		}
+		
 		if(index == -1) {
 			tokens[0] = link;
 		} else {
