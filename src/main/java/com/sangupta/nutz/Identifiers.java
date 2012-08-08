@@ -64,4 +64,6 @@ public interface Identifiers {
 	
 	public static final char HYPHEN = '-';
 	
+	public static final char DOT = '.';
+	
 }

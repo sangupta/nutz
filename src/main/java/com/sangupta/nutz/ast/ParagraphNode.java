@@ -92,6 +92,10 @@ public class ParagraphNode extends TextNode {
 		}
 
 		if(this.children.size() == 1) {
+			if(this.parent instanceof UnorderedListNode || this.parent instanceof OrderedListNode) {
+				atRootNode = false;
+			}
+			
 			if(atRootNode) {
 				builder.append("<p>");
 			}
@@ -134,10 +138,14 @@ public class ParagraphNode extends TextNode {
 	public String toString() {
 		StringBuilder b = new StringBuilder();
 		b.append("[PARA: ");
-		for(Node node : this.children) {
-			b.append(node.toString());
-			b.append(",");
+		
+		if(this.children != null) {
+			for(Node node : this.children) {
+				b.append(node.toString());
+				b.append(",");
+			}
 		}
+		
 		b.append("]");
 		return b.toString();
 	}

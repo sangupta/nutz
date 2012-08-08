@@ -21,6 +21,8 @@
 
 package com.sangupta.nutz.ast;
 
+import java.util.Map;
+
 /**
  * 
  * @author sangupta
@@ -38,6 +40,23 @@ public class OrderedListNode extends Node {
 		}
 		
 		return b.toString();
+	}
+	
+	@Override
+	public void write(StringBuilder builder, boolean atRootNode, Map<String, AnchorNode> referenceLinks) {
+		builder.append("<ol>");
+		builder.append(NEW_LINE);
+		
+		for(Node node : this.children) {
+			builder.append("<li>");
+			node.write(builder, true, referenceLinks);
+			builder.append("</li>");
+			builder.append(NEW_LINE);
+		}
+		
+		builder.append("</ol>");
+		builder.append(NEW_LINE);
+		builder.append(NEW_LINE);
 	}
 	
 }

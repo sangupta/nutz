@@ -37,7 +37,7 @@ public class UnorderedListNode extends Node {
 		
 		for(Node node : this.children) {
 			builder.append("<li>");
-			node.write(builder, false, referenceLinks);
+			node.write(builder, true, referenceLinks);
 			builder.append("</li>");
 			builder.append(NEW_LINE);
 		}

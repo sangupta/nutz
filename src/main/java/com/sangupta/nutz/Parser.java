@@ -24,6 +24,7 @@ package com.sangupta.nutz;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.StringReader;
+import java.util.List;
 
 import com.sangupta.nutz.ast.BlockQuoteNode;
 import com.sangupta.nutz.ast.CodeBlockNode;
@@ -212,11 +213,11 @@ public class Parser {
 				}
 			}
 			
-			if((line.startsWith("* ") || line.startsWith("*\t")) && !MarkupUtils.isOnlySpaceAndCharacter(line, '*')) {
+			if(isUnorderedListOf(line, '*') || isUnorderedListOf(line, '-') || isUnorderedListOf(line, '+')) {
 				// this is a list of data
-				lastNode = parseUnorderedList(currentRoot, line);
+				lastNode = parseList(currentRoot, line, false);
 				currentRoot.addChild(lastNode);
-				return true;
+				return false;
 			}
 		} /// leading spaces == 0
 		
@@ -300,9 +301,9 @@ public class Parser {
 		
 		// try and see if this is an ordered list
 		if(lineStartsWithNumber(line)) {
-			lastNode = parseOrderedList(currentRoot, line);
+			lastNode = parseList(currentRoot, line, true);
 			currentRoot.addChild(lastNode);
-			return true;
+			return false;
 		}
 		
 		// check if line is empty
@@ -324,46 +325,67 @@ public class Parser {
 		
 		return true;
 	}
+	
+	private boolean isUnorderedListOf(String line, char terminator) {
+		if((line.startsWith(terminator + " ") || line.startsWith(terminator + "\t")) && !MarkupUtils.isOnlySpaceAndCharacter(line, terminator)) {
+			return true;
+		}
+		
+		return false;
+	}
 
+	/**
+	 * Create a horizontal rule of the given line if it is.
+	 * 
+	 * @param currentRoot
+	 * @param line
+	 * @param leadingPosition
+	 * @return
+	 */
 	private boolean checkForVariousHorizontalRules(Node currentRoot, String line, int leadingPosition) {
+		if(isHorizontalRule(line, leadingPosition)) {
+			lastNode = new HRuleNode();
+			currentRoot.addChild(lastNode);
+			return true;
+		}
+		
+		return false;
+	}
+	
+	/**
+	 * Checks if line data at given leading position is a horizontal rule or not.
+	 * 
+	 * @param line
+	 * @param leadingPosition
+	 * @return
+	 */
+	private boolean isHorizontalRule(String line, int leadingPosition) {
 		if(MarkupUtils.isOnlySpaceAndCharacter(line, '-')) {
 			if(line.startsWith("---", leadingPosition)) {
-				lastNode = new HRuleNode();
-				currentRoot.addChild(lastNode);
 				return true;
 			}
 	
 			if(line.startsWith("- - -", leadingPosition)) {
-				lastNode = new HRuleNode();
-				currentRoot.addChild(lastNode);
 				return true;
 			}
 		}
 
 		if(MarkupUtils.isOnlySpaceAndCharacter(line, '*')) {
 			if(line.startsWith("***", leadingPosition)) {
-				lastNode = new HRuleNode();
-				currentRoot.addChild(lastNode);
 				return true;
 			}
 	
 			if(line.startsWith("* * *", leadingPosition)) {
-				lastNode = new HRuleNode();
-				currentRoot.addChild(lastNode);
 				return true;
 			}
 		}
 		
 		if(MarkupUtils.isOnlySpaceAndCharacter(line, '_')) {
 			if(line.startsWith("___", leadingPosition)) {
-				lastNode = new HRuleNode();
-				currentRoot.addChild(lastNode);
 				return true;
 			}
 	
 			if(line.startsWith("_ _ _", leadingPosition)) {
-				lastNode = new HRuleNode();
-				currentRoot.addChild(lastNode);
 				return true;
 			}
 		}
@@ -441,7 +463,7 @@ public class Parser {
 	 * @param line2
 	 * @return
 	 */
-	private boolean lineStartsWithNumber(String line2) {
+	private boolean lineStartsWithNumber(String line) {
 		int dot = line.indexOf('.');
 		if(dot == -1) {
 			return false;
@@ -493,13 +515,29 @@ public class Parser {
 	 * @return
 	 * @throws IOException
 	 */
-	private OrderedListNode parseOrderedList(Node currentRoot, String line) throws IOException {
-		OrderedListNode list = new OrderedListNode();
+	private Node parseList(Node currentRoot, String line, boolean ordered) throws IOException {
+		Node listNode;
+		if(ordered) {
+			listNode = new OrderedListNode();
+		} else {
+			listNode = new UnorderedListNode();
+		}
+		
+		int trimLocation = 1;
 		
 		do {
-			line = line.substring(1).trim();
+			trimLocation = 1;
 			
-			list.addChild(textNodeParser.parse(currentRoot, line));
+			if(!line.isEmpty()) {
+				if(ordered) {
+					if(line.charAt(1) == Identifiers.DOT) {
+						trimLocation = 2;
+					}
+				}
+				
+				line = line.substring(trimLocation).trim();
+				listNode.addChild(textNodeParser.parse(listNode, line));
+			}
 
 			// read a new line
 			line = readLine();
@@ -509,42 +547,45 @@ public class Parser {
 			}
 			
 			// check for termination of block
-			if(!lineStartsWithNumber(line)) {
-				break;
+			boolean probablyBreak = false;
+			if(!line.isEmpty()) {
+				if(ordered) {
+					if(!lineStartsWithNumber(line)) {
+						probablyBreak = true;
+					}
+				} else {
+					if(line.startsWith("*") || line.startsWith("+") || line.startsWith("-")) {
+						if(isHorizontalRule(line, 0)) {
+							break;
+						}
+					} else {
+						probablyBreak = true;
+					}
+				}
+			}
+			
+			// this check ensures that we do not exit from creating a list item
+			// in case this is a continuation list item text
+			if(probablyBreak) {
+				int[] tokens = MarkupUtils.findLeadingSpaces(line);
+				if(tokens[1] > trimLocation) {
+					// this is a continuation
+					// add the text to previous node
+					List<Node> nodes = textNodeParser.parse(listNode, line).getChildren();
+					for(Node child : nodes) {
+						listNode.lastNode().addChild(child);
+					}
+					line = "";
+				} else {
+					break;
+				}
 			}
 		} while(true);
 		
-		return list;
-	}
-
-	/**
-	 * Parses a list of elements while reading ahead
-	 * 
-	 * @param line
-	 * @return
-	 */
-	private UnorderedListNode parseUnorderedList(Node currentRoot, String line) throws IOException {
-		UnorderedListNode list = new UnorderedListNode();
+		// reset
+		this.line = line;
 		
-		do {
-			line = line.substring(1).trim();
-			
-			list.addChild(textNodeParser.parse(currentRoot, line));
-
-			// read a new line
-			line = readLine();
-			
-			if(line == null) {
-				break;
-			}
-			
-			// check for termination of block
-			if(!line.startsWith("*")) {
-				break;
-			}
-		} while(true);
-		
-		return list;
+		return listNode;
 	}
 
 	/**
