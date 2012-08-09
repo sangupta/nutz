@@ -21,42 +21,16 @@
 
 package com.sangupta.nutz.ast;
 
-import java.util.Map;
 
 /**
  * 
  * @author sangupta
  *
  */
-public class UnorderedListNode extends Node {
+public class UnorderedListNode extends AbstractListNode {
 	
-	@Override
-	public void write(StringBuilder builder, boolean atRootNode, Map<String, AnchorNode> referenceLinks) {
-		builder.append("<ul>");
-		builder.append(NEW_LINE);
-		
-		for(Node node : this.children) {
-			builder.append("<li>");
-			node.write(builder, true, referenceLinks);
-			builder.append("</li>");
-			builder.append(NEW_LINE);
-		}
-		
-		builder.append("</ul>");
-		builder.append(NEW_LINE);
-		builder.append(NEW_LINE);
-	}
-	
-	@Override
-	public String toString() {
-		StringBuilder b = new StringBuilder(1024);
-		b.append("ULIST:\n");
-		for(Node node : this.children) {
-			b.append(node.toString());
-			b.append("\n");
-		}
-		
-		return b.toString();
+	public UnorderedListNode() {
+		super("ul");
 	}
 	
 }

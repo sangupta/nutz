@@ -578,9 +578,12 @@ public class TextNodeParser implements Identifiers {
 			} else {
 				root.addChild(new PlainTextNode(root, String.valueOf(array)));
 			}
+			
+			return;
 		}
 		
 		// TODO: we still need to convert these terminators
+		System.out.println("FIX THIS!!!");
 	}
 
 	/**

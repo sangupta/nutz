@@ -61,10 +61,11 @@ public class ParagraphNode extends TextNode {
 		}
 		
 		// this is a text node
-		Node node = this.children.get(current);
+		// Node node = this.children.get(current);
 		
 		// convert this to a heading node
 		// TODO: fix this
+		System.out.println("FIX THIS");
 		
 		return false;
 	}
@@ -91,8 +92,9 @@ public class ParagraphNode extends TextNode {
 			}
 		}
 
+		// only one element
 		if(this.children.size() == 1) {
-			if(this.parent instanceof UnorderedListNode || this.parent instanceof OrderedListNode) {
+			if(this.parent instanceof AbstractListNode) {
 				atRootNode = false;
 			}
 			
@@ -119,24 +121,57 @@ public class ParagraphNode extends TextNode {
 			return;
 		}
 		
-		if(atRootNode) {
-			builder.append("<p>");
+		// handle more than one element
+		if(this.parent instanceof AbstractListNode) {
+			boolean onlySubLists = true;
+			for(int index = 1; index < this.children.size(); index++) {
+				if(!(this.children.get(index) instanceof AbstractListNode)) {
+					onlySubLists = false;
+					break;
+				}
+			}
+			
+			if(onlySubLists) {
+				atRootNode = false;
+			}
 		}
 		
-		for(Node node : this.children) {
+		boolean paraStart = false;
+		if(atRootNode) {
+			builder.append("<p>");
+			paraStart = true;
+		}
+
+		for(int index = 0; index < this.children.size(); index++) {
+			Node node = this.children.get(index);
+			
 			if(node instanceof ParagraphNode) {
+				if(paraStart) {
+					builder.append("</p>");
+					builder.append(NEW_LINE);
+					builder.append(NEW_LINE);
+				}
+				builder.append("<p>");
+				paraStart = true;
+			}
+			
+			if(paraStart && node instanceof AbstractListNode) {
 				builder.append("</p>");
 				builder.append(NEW_LINE);
 				builder.append(NEW_LINE);
-				builder.append("<p>");
+				
+				paraStart = false;
 			}
 			
 			node.write(builder, atRootNode, referenceLinks);
 		}
 		
 		if(atRootNode) {
-			builder.append("</p>");
-			if(!(this.parent instanceof OrderedListNode || this.parent instanceof UnorderedListNode)) {
+			if(paraStart) {
+				builder.append("</p>");
+			}
+			
+			if(!(this.parent instanceof AbstractListNode)) {
 				builder.append(NEW_LINE);
 				builder.append(NEW_LINE);
 			}

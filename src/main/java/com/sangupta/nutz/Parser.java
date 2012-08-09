@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.util.List;
 
+import com.sangupta.nutz.ast.AbstractListNode;
 import com.sangupta.nutz.ast.BlockQuoteNode;
 import com.sangupta.nutz.ast.CodeBlockNode;
 import com.sangupta.nutz.ast.HRuleNode;
@@ -215,9 +216,9 @@ public class Parser {
 				}
 			}
 			
-			if(isUnorderedListOf(line, '*') || isUnorderedListOf(line, '-') || isUnorderedListOf(line, '+')) {
+			if(isUnorderedList(line, leadingPosition)) {
 				// this is a list of data
-				lastNode = parseList(currentRoot, line, false);
+				lastNode = parseList(currentRoot, line, false, leadingPosition);
 				currentRoot.addChild(lastNode);
 				return false;
 			}
@@ -303,7 +304,7 @@ public class Parser {
 		
 		// try and see if this is an ordered list
 		if(lineStartsWithNumber(line)) {
-			lastNode = parseList(currentRoot, line, true);
+			lastNode = parseList(currentRoot, line, true, leadingPosition);
 			currentRoot.addChild(lastNode);
 			return false;
 		}
@@ -328,8 +329,16 @@ public class Parser {
 		return true;
 	}
 	
-	private boolean isUnorderedListOf(String line, char terminator) {
-		if((line.startsWith(terminator + " ") || line.startsWith(terminator + "\t")) && !MarkupUtils.isOnlySpaceAndCharacter(line, terminator)) {
+	private boolean isUnorderedList(String line, int leadingPosition) {
+		if(isUnorderedListOfChar(line, '*', leadingPosition) || isUnorderedListOfChar(line, '+', leadingPosition) || isUnorderedListOfChar(line, '-', leadingPosition)) {
+			return true;
+		}
+		
+		return false;
+	}
+	
+	private boolean isUnorderedListOfChar(String line, char terminator, int leadingPosition) {
+		if((line.startsWith(terminator + " ", leadingPosition) || line.startsWith(terminator + "\t", leadingPosition)) && !MarkupUtils.isOnlySpaceAndCharacter(line, terminator)) {
 			return true;
 		}
 		
@@ -517,7 +526,7 @@ public class Parser {
 	 * @return
 	 * @throws IOException
 	 */
-	private Node parseList(Node currentRoot, String line, boolean ordered) throws IOException {
+	private Node parseList(Node currentRoot, String line, boolean ordered, final int currentLeadingPosition) throws IOException {
 		Node listNode;
 		if(ordered) {
 			listNode = new OrderedListNode();
@@ -528,24 +537,27 @@ public class Parser {
 		int trimLocation = 1;
 		boolean newLineEncountered = false;
 		boolean paragraphsAdded = false;
+		boolean isParsed = true;
 		
 		do {
 			trimLocation = 1;
-			
-			if(!line.isEmpty()) {
-				if(ordered) {
-					if(line.charAt(1) == Identifiers.DOT) {
-						trimLocation = 2;
+
+			if(isParsed) {
+				if(!line.isEmpty()) {
+					if(ordered) {
+						if(line.charAt(1) == Identifiers.DOT) {
+							trimLocation = 2;
+						}
 					}
+					
+					line = line.substring(trimLocation).trim();
+					listNode.addChild(textNodeParser.parse(listNode, line));
 				}
-				
-				line = line.substring(trimLocation).trim();
-				listNode.addChild(textNodeParser.parse(listNode, line));
+	
+				// read a new line
+				line = readLine();
 			}
 
-			// read a new line
-			line = readLine();
-			
 			if(line == null) {
 				break;
 			}
@@ -583,32 +595,91 @@ public class Parser {
 				}
 			} else {
 				newLineEncountered = true;
+				
+				// break out if we are in a nested list
+				if(currentRoot instanceof AbstractListNode) {
+					break;
+				}
 			}
 			
 			// this check ensures that we do not exit from creating a list item
 			// in case this is a continuation list item text
 			if(probablyBreak) {
 				int[] tokens = MarkupUtils.findLeadingSpaces(line);
-				if(tokens[1] > trimLocation) {
-					// this is a continuation
-					// add the text to previous node
-					TextNode textNode = textNodeParser.parse(listNode, line);
-					
-					if(newLineEncountered) {
-						listNode.lastNode().addChild(textNode);
-					} else {
-						List<Node> nodes = textNode.getChildren();
-						for(Node child : nodes) {
-							listNode.lastNode().addChild(child);
+				
+				final int leadingPosition = tokens[0];
+				final int leadingSpaces = tokens[1];
+				
+				if(leadingSpaces > trimLocation) {
+					// we must also check if the leading position is the same
+					// as in the current item
+					// if it is greater than the current leading position
+					// it is a child list
+					boolean childListEncountered = false;
+					if(tokens[0] > currentLeadingPosition) {
+						childListEncountered = true;
+						
+						// we have a new child list
+						// create a new child list element
+						boolean childOrdered = false;
+						if(isUnorderedList(line, leadingPosition)) {
+							// do nothing
+						} else if(lineStartsWithNumber(line)) {
+							childOrdered = true;
+						} else {
+							// this is normal text
+							childListEncountered = false;
+						}
+						
+						if(childListEncountered) {
+							Node childListNode = parseList(listNode, line.substring(leadingPosition), childOrdered, tokens[0]);
+							listNode.lastNode().addChild(childListNode);
+							
+							// this will keep recursion happy
+							line = this.line;
+							
+							isParsed = false;
+							continue;
 						}
 					}
-					line = "";
+					
+					if(leadingPosition < currentLeadingPosition) {
+						// this means we are done with the child list
+						// and need to break out
+						break;
+					}
+					
+					if(leadingPosition == currentLeadingPosition) {
+						line = line.substring(leadingPosition);
+
+						// we have a list item
+						isParsed = true;
+						continue;
+					}
+
+					if(!childListEncountered) {
+						// this is a continuation
+						// add the text to previous node
+						TextNode textNode = textNodeParser.parse(listNode, line);
+						
+						if(newLineEncountered) {
+							listNode.lastNode().addChild(textNode);
+						} else {
+							List<Node> nodes = textNode.getChildren();
+							for(Node child : nodes) {
+								listNode.lastNode().addChild(child);
+							}
+						}
+						line = "";
+					}
 				} else {
 					break;
 				}
 				
 				newLineEncountered = false;
 			}
+			
+			isParsed = true;
 		} while(true);
 
 		// if paragraphs were added last - then it needs to be added to the last node element
