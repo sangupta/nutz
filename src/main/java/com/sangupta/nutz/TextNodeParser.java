@@ -226,19 +226,22 @@ public class TextNodeParser implements Identifiers {
 		// extract the tag name from the line
 		String tagName = extractTagName(markup);
 		
-		String end = "</" + tagName + ">";
-		index = line.indexOf(end, pos);
+		index = MarkupUtils.findEndingTagPosition(line, pos + tagName.length(), tagName);
 		if(index == -1) {
-			// no idea what this is
-			// ignore
-			return;
+			if(MarkupUtils.isSingularHtmlElement(tagName)) {
+				index = line.indexOf('>', pos + tagName.length()) + 1;
+			} else {
+				// no idea what this is
+				// ignore
+				return;
+			}
 		}
 		
 		// add an XML block
-		root.addChild(new XmlNode(line.substring(pos, index + end.length())));
+		root.addChild(new XmlNode(line.substring(pos, index)));
 		
 		// reset
-		pos = index + end.length();
+		pos = index;
 		lastConverted = pos;
 	}
 	
@@ -250,11 +253,15 @@ public class TextNodeParser implements Identifiers {
 	 */
 	private String extractTagName(String markup) {
 		int index = markup.indexOf(SPACE);
-		if(index == -1) {
-			return markup;
+		if(index != -1) {
+			markup = markup.substring(0, index);
 		}
 		
-		return markup.substring(0, index);
+		if(markup.endsWith("/")) {
+			markup = markup.substring(0, markup.length() - 1);
+		}
+		
+		return markup;
 	}
 
 	/**

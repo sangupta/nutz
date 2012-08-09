@@ -161,6 +161,12 @@ public class Parser {
 		final int leadingSpaces = spaceTokens[1];
 		
 		if(leadingSpaces == 0) {
+			if(line.startsWith("<!--")) {
+				lastNode = parseText(currentRoot, line, true);
+				currentRoot.addChild(lastNode);
+				return true;
+			}
+			
 			if(line.startsWith("#")) {
 				lastNode = parseHeading(currentRoot, line);
 				currentRoot.addChild(lastNode);
@@ -784,7 +790,7 @@ public class Parser {
 		
 		collector.setLength(0);
 		do {
-			if(readLine.isEmpty() || readLine.endsWith("  ")) {
+			if(readLine.isEmpty()) {
 				// this is a break for a new line
 				// exit now
 				break;
@@ -792,6 +798,11 @@ public class Parser {
 			
 			collector.append(readLine);
 			collector.append('\n');
+			
+			if(readLine.endsWith("  ")) {
+				line = readLine();
+				break;
+			}
 
 			line = readLine();
 			if(line == null || line.isEmpty()) {

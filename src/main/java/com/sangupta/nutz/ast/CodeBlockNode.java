@@ -23,6 +23,8 @@ package com.sangupta.nutz.ast;
 
 import java.util.Map;
 
+import com.sangupta.nutz.HtmlEscapeUtils;
+
 /**
  * 
  * @author sangupta
@@ -50,7 +52,9 @@ public class CodeBlockNode extends Node {
 		}
 		
 		builder.append("><code>");
-		builder.append(this.code);
+		
+		HtmlEscapeUtils.writeEscapedLine(this.code, builder);
+		
 		builder.append("</code></pre>");
 		builder.append(NEW_LINE);
 		builder.append(NEW_LINE);

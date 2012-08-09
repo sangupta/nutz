@@ -95,5 +95,15 @@ public class MarkupUtilsTest {
 		Assert.assertEquals(9, MarkupUtils.indexOfSkippingForPairCharacter("(p(aren)s)", ')', '(', 1));
 		
 	}
+	
+	@Test
+	public void testFindEndingTagPosition() {
+		Assert.assertEquals(6, MarkupUtils.findEndingTagPosition("<hr />sandeep", 3, "hr"));
+		Assert.assertEquals(7, MarkupUtils.findEndingTagPosition("<p></p>", 3, "p"));
+		Assert.assertEquals(14, MarkupUtils.findEndingTagPosition("<p><p></p></p>", 3, "p"));
+		Assert.assertEquals(18, MarkupUtils.findEndingTagPosition("<p><p><br></p></p>", 3, "p"));
+		Assert.assertEquals(23, MarkupUtils.findEndingTagPosition("<p><p><br></p><br/></p>", 3, "p"));
+		Assert.assertEquals(27, MarkupUtils.findEndingTagPosition("<p><p><br><hr></p><br/></p>", 3, "p"));
+	}
 
 }

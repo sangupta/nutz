@@ -22,6 +22,7 @@
 package com.sangupta.nutz;
 
 import java.util.Arrays;
+import java.util.Stack;
 
 /**
  * Utility functions used when constructing the Abstract Syntax Tree
@@ -236,6 +237,113 @@ public class MarkupUtils {
 		String search = String.valueOf(array);
 		
 		return line.indexOf(search, startIndex);
+	}
+
+	/**
+	 * Find the index of the ending HTML/XML tagname in the given line starting at given
+	 * position and count all tags in between. 
+	 * 
+	 * @param line
+	 * @param pos
+	 * @param tagName
+	 * @return
+	 */
+	public static int findEndingTagPosition(String line, int pos, final String tagName) {
+//		String end = "</" + tagName + ">";
+//		return line.indexOf(end, pos);
+		
+		final int maxEndIndex = line.length() - (tagName.length() + 3);
+		
+		char ch;
+		int nextIndex, nextIndex2;
+		String tag = null;
+		Stack<String> stack = new Stack<String>();
+		stack.push(tagName);
+		
+		for(int index = pos; index <= maxEndIndex; index++) {
+			ch = line.charAt(index);
+			if(ch == '<') {
+				if(line.charAt(index + 1) == '!') {
+					// comment detected
+					// skip comment
+					nextIndex = line.indexOf("-->", index);
+					if(nextIndex == -1) {
+						return -1;
+					}
+					
+					index = nextIndex + 2;
+					continue;
+				}
+				
+				// closing tag name
+				if(line.charAt(index + 1) == '/') {
+					// read tag name
+					nextIndex = line.indexOf(">", index);
+					tag = line.substring(index + 2, nextIndex);
+					
+					// pop out ending tags till a matching one is not encountered
+					do {
+						if(stack.isEmpty()) {
+							return -1;
+						}
+						
+					} while(!stack.pop().equals(tag));
+					
+					if(stack.isEmpty()) {
+						return line.indexOf('>', index + 1) + 1;
+					}
+					
+					index = nextIndex;
+					continue;
+				}
+				
+				// new tag name
+				nextIndex = line.indexOf(Identifiers.SPACE, index);
+				nextIndex2 = line.indexOf('>', index);
+				if(nextIndex2 != -1 && nextIndex != -1) {
+					if(nextIndex2 < nextIndex) {
+						nextIndex = nextIndex2;
+					}
+				} else {
+					if(nextIndex == -1 && nextIndex2 == -1) {
+						continue;
+					}
+					
+					if(nextIndex == -1) {
+						nextIndex = nextIndex2;
+					}
+				}
+				
+				tag = line.substring(index + 1, nextIndex);
+				stack.push(tag);
+				
+				index = nextIndex;
+			} else if(ch == '/') {
+				if(line.charAt(index + 1) == '>') {
+					// this is the self closing tag
+					// pop out the current element
+					stack.pop();
+					
+					if(stack.isEmpty()) {
+						return index + 2;
+					}
+				}
+			}
+		}
+		
+		return -1;
+	}
+
+	public static boolean isSingularHtmlElement(String tagName) {
+		if("hr".equals(tagName)) {
+			return true;
+		}
+		
+		if("br".equals(tagName)) {
+			return true;
+		}
+		
+		return false;
 	}
 
 }
