@@ -35,6 +35,7 @@ import com.sangupta.nutz.ast.OrderedListNode;
 import com.sangupta.nutz.ast.ParagraphNode;
 import com.sangupta.nutz.ast.PlainTextNode;
 import com.sangupta.nutz.ast.RootNode;
+import com.sangupta.nutz.ast.SpecialCharacterNode;
 import com.sangupta.nutz.ast.TextNode;
 import com.sangupta.nutz.ast.UnorderedListNode;
 
@@ -526,6 +527,7 @@ public class Parser {
 		
 		int trimLocation = 1;
 		boolean newLineEncountered = false;
+		boolean paragraphsAdded = false;
 		
 		do {
 			trimLocation = 1;
@@ -566,6 +568,17 @@ public class Parser {
 				}
 				
 				if(!probablyBreak) {
+					if(newLineEncountered) {
+						// this means that there was a new line between this line
+						// and the previous non-empty line
+						// and thus we need to add a para tag
+						// around the list item
+						listNode.lastNode().addChild(new SpecialCharacterNode(listNode, '\n'));
+						paragraphsAdded = true;
+					} else {
+						paragraphsAdded = false;
+					}
+					
 					newLineEncountered = false;
 				}
 			} else {
@@ -597,6 +610,12 @@ public class Parser {
 				newLineEncountered = false;
 			}
 		} while(true);
+
+		// if paragraphs were added last - then it needs to be added to the last node element
+		
+		if(paragraphsAdded) {
+			listNode.lastNode().addChild(new SpecialCharacterNode(listNode, '\n'));
+		}
 		
 		// reset
 		this.line = line;

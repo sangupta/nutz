@@ -136,8 +136,10 @@ public class ParagraphNode extends TextNode {
 		
 		if(atRootNode) {
 			builder.append("</p>");
-			builder.append(NEW_LINE);
-			builder.append(NEW_LINE);
+			if(!(this.parent instanceof OrderedListNode || this.parent instanceof UnorderedListNode)) {
+				builder.append(NEW_LINE);
+				builder.append(NEW_LINE);
+			}
 		}
 	}
 	

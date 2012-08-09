@@ -69,6 +69,9 @@ public class SpecialCharacterNode extends TextNode {
 				
 			case Identifiers.HTML_OR_AUTOLINK_END:
 				return "&gt";
+				
+			case '\n':
+				return "";
 		}
 		
 		return String.valueOf(this.character);
