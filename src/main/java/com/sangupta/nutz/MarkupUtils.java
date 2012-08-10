@@ -345,5 +345,48 @@ public class MarkupUtils {
 		
 		return false;
 	}
+	
+	public static int countCharsIgnoringSpaces(final String line, final char ch, final int startIndex) {
+		int count = 0;
+		for(int index = startIndex; index < line.length(); index++) {
+			char c = line.charAt(index);
+			if(c == ch) {
+				count++;
+				continue;
+			}
+			
+			if(c == ' ' || c == '\t') {
+				continue;
+			}
+			
+			break;
+		}
+		
+		return count;
+	}
+
+	public static String removeFirstN(String line, final char ch, final int num) {
+		int count = 0;
+		
+		for(int index = 0; index < line.length(); index++) {
+			char c = line.charAt(index);
+			if(c == ch) {
+				count++;
+				if(count == num) {
+					return line.substring(index + 1);
+				}
+				
+				continue;
+			}
+			
+			if(c == ' ' || c == '\t') {
+				continue;
+			}
+			
+			break;
+		}
+		
+		return null;
+	}
 
 }

@@ -30,6 +30,10 @@ import java.util.Map;
  */
 public class BlockQuoteNode extends Node {
 	
+	public BlockQuoteNode(RootNode rootNode) {
+		this.children = rootNode.getChildren();
+	}
+	
 	@Override
 	public void write(StringBuilder builder, boolean atRootNode, Map<String, AnchorNode> referenceLinks) {
 		if(this.children == null || this.children.isEmpty()) {

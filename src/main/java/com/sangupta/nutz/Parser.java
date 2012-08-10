@@ -82,59 +82,25 @@ public class Parser {
 	private final TextNodeParser textNodeParser = new TextNodeParser();
 	
 	/**
-	 * Maintains the depth of blockquotes nesting
-	 */
-	private int blockDepth = 0;
-	
-	/**
 	 * Public function that parses and creates an AST of the given markup.
 	 * 
 	 * @param markup
 	 * @return
 	 * @throws Exception
 	 */
-	public RootNode parse(String markup) throws Exception {
+	public RootNode parse(String markup) throws IOException {
 		reader = new BufferedReader(new StringReader(markup));
 		readLines(ROOT_NODE);
 		
 		return ROOT_NODE;
 	}
-	
-	private String readLine() throws IOException {
-		String line = reader.readLine();
-		
-		if(line == null) {
-			return null;
-		}
-		
-		if(this.blockDepth > 0) {
-			int length = line.length();
-			int found = 0;
-			for(int index = 0; index < length; index++) {
-				if(line.charAt(index) == Identifiers.HTML_OR_AUTOLINK_END) {
-					found++;
-				}
-				
-				if(found == this.blockDepth) {
-					if(line.charAt(index + 1) == Identifiers.SPACE) {
-						index++;
-					}
-					
-					line = line.substring(index + 1);
-					break;
-				}
-			}
-		}
-		
-		return line;
-	}
-	
+
 	/**
 	 * Read all lines one-by-one and create the AST.
 	 * 
 	 * @throws Exception
 	 */
-	private void readLines(Node root) throws Exception {
+	private void readLines(Node root) throws IOException {
 		boolean readAhead = true;
 		do {
 			if(readAhead) {
@@ -155,7 +121,7 @@ public class Parser {
 	 * @param line
 	 * @throws Exception
 	 */
-	private boolean parseLine(Node currentRoot, String line) throws Exception {
+	private boolean parseLine(Node currentRoot, String line) throws IOException {
 		final int[] spaceTokens = MarkupUtils.findLeadingSpaces(line);
 		final int leadingPosition = spaceTokens[0];
 		final int leadingSpaces = spaceTokens[1];
@@ -269,43 +235,16 @@ public class Parser {
 		// trim one space after this
 		// and then re-parse the line
 		if(!line.isEmpty() && leadingPosition < line.length() && line.charAt(leadingPosition) == Identifiers.HTML_OR_AUTOLINK_END) {
-			BlockQuoteNode blockQuoteNode;
-			if(currentRoot.hasChild() && (currentRoot.lastNode() instanceof BlockQuoteNode)) {
-				blockQuoteNode = (BlockQuoteNode) currentRoot.lastNode();
-			} else {
-				blockQuoteNode = new BlockQuoteNode();
-				currentRoot.addChild(blockQuoteNode);
-			}
 
+			String blockText = parseBlockText(line);
+			RootNode rootNode = new Parser().parse(blockText);
+			BlockQuoteNode blockQuoteNode = new BlockQuoteNode(rootNode);
+
+			currentRoot.addChild(blockQuoteNode);
 			lastNode = blockQuoteNode;
-
-			// parse the block
-			this.blockDepth++;
-			
-			String temp = line.substring(leadingPosition + 1);
-			if(temp.charAt(0) == Identifiers.SPACE) {
-				temp = temp.substring(1);
-			}
-			
-			boolean returnValue = parseLine(blockQuoteNode, temp);
-			
-			// if we need to parse the previous line
-			// again, we need to pre-pend the blockquote
-			// characters again
-			// to make sure that it gets picked up
-			if(!returnValue && this.line != null) {
-				// append back the characters found
-				temp = this.line;
-				for(int j = 0; j < this.blockDepth; j++) {
-					temp = "> " + temp;
-				}
-				
-				this.line = temp;
-			}
-			this.blockDepth--;
 			
 			// save the node
-			return returnValue;
+			return false;
 		}
 		
 		// try and see if this is an ordered list
@@ -456,7 +395,7 @@ public class Parser {
 			
 			// read one more line
 			firstLine = false;
-			line = readLine();
+			line = reader.readLine();
 			if(line == null) {
 				break;
 			}
@@ -561,7 +500,7 @@ public class Parser {
 				}
 	
 				// read a new line
-				line = readLine();
+				line = reader.readLine();
 			}
 
 			if(line == null) {
@@ -737,7 +676,7 @@ public class Parser {
 	 * @return
 	 * @throws Exception
 	 */
-	private HeadingNode parseHeading(Node currentRoot, String line) throws Exception {
+	private HeadingNode parseHeading(Node currentRoot, String line) throws IOException {
 		int headCount = 1;
 		int index = 1;
 		do {
@@ -778,7 +717,7 @@ public class Parser {
 	 * @return
 	 * @throws Exception
 	 */
-	private Node parseText(Node currentRoot, String readLine, boolean fetchMoreLines) throws Exception {
+	private Node parseText(Node currentRoot, String readLine, boolean fetchMoreLines) throws IOException {
 		if(!fetchMoreLines) {
 			return textNodeParser.parse(currentRoot, readLine);
 		}
@@ -800,11 +739,11 @@ public class Parser {
 			collector.append('\n');
 			
 			if(readLine.endsWith("  ")) {
-				line = readLine();
+				line = reader.readLine();
 				break;
 			}
 
-			line = readLine();
+			line = reader.readLine();
 			if(line == null || line.isEmpty()) {
 				break;
 			}
@@ -819,6 +758,37 @@ public class Parser {
 		} while(true);
 		
 		return textNodeParser.parse(currentRoot, collector.toString());
+	}
+	
+	private String parseBlockText(String line) throws IOException {
+		StringBuilder builder = new StringBuilder(1024);
+		
+		int index = -1;
+		do {
+			index = line.indexOf('>');
+
+			if(index >= 0) {
+				index++;
+				if(index < line.length() && line.charAt(index) == Identifiers.SPACE) {
+					line = line.substring(index + 1);
+				} else {
+					line = line.substring(index);
+				}
+
+				builder.append(line);
+				builder.append(Identifiers.NEW_LINE);
+			}
+			
+			line = reader.readLine();
+			
+			if(line == null) {
+				break;
+			}
+		} while(index >= 0);
+		
+		this.line = line;
+		
+		return builder.toString();
 	}
 	
 }

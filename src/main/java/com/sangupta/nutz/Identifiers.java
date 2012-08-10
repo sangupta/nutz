@@ -66,4 +66,6 @@ public interface Identifiers {
 	
 	public static final char DOT = '.';
 	
+	public static final char NEW_LINE = '\n';
+	
 }
