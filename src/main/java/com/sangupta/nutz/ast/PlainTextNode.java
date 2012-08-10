@@ -44,12 +44,6 @@ public class PlainTextNode extends TextNode {
 	@Override
 	public void write(StringBuilder builder, boolean atRootNode, Map<String, AnchorNode> referenceLinks) {
 		builder.append(this.text);
-
-		// delete any new line char from this 
-		if(this.text.endsWith("\n")) {
-			builder.deleteCharAt(builder.length() - 1);
-			return;
-		} 
 	}
 	
 	@Override
