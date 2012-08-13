@@ -592,11 +592,13 @@ doWhileLoop:
 		}
 		
 		collector.setLength(0);
+
+		doWhileLoop:		
 		do {
 			if(this.line.isEmpty) {
 				// this is a break for a new line
 				// exit now
-				break;
+				break doWhileLoop;
 			}
 			
 			collector.append(this.line.getText());
@@ -604,18 +606,18 @@ doWhileLoop:
 			
 			if(this.line.endsWith("  ")) {
 				this.line = new TextLine(reader.readLine());
-				break;
+				break doWhileLoop;
 			}
 
 			this.line = new TextLine(reader.readLine());
-			if(line == null || line.isEmpty) {
-				break;
+			if(line == null || line.isEmpty || line.trimEmpty) {
+				break doWhileLoop;
 			}
 			
 			// this signifies a presence of heading
 			// need to break here
 			if(this.line.startsWith("===") || this.line.startsWith("---")) {
-				break;
+				break doWhileLoop;
 			}
 		} while(true);
 		
