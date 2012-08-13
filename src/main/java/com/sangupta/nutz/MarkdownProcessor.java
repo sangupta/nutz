@@ -21,23 +21,67 @@
 
 package com.sangupta.nutz;
 
+import java.io.IOException;
+import java.io.Reader;
+
 import com.sangupta.nutz.ast.RootNode;
 
 /**
+ * Markdown processor that converts Markdown syntax into valid
+ * HTML code. The processor first parses the markup and generates
+ * an Abstract-Syntax tree before tranforming and emitting the
+ * HTML code. This allows for easier extension and validity of
+ * parsing.
  * 
  * @author sangupta
- *
+ * @since 0.1
  */
 public class MarkdownProcessor {
-	
-	public RootNode parse(String markup) throws Exception {
+
+	/**
+	 * Parse the given markup text and construct the syntax-tree.
+	 * 
+	 * @param markup
+	 * @return
+	 * @throws Exception
+	 */
+	public RootNode parse(String markup) throws IOException {
 		return new Parser().parse(markup);
 	}
-
-	public String toHtml(String markup) throws Exception {
+	
+	/**
+	 * Parse the markup from given reader and construct the syntax-tree.
+	 * 
+	 * @param reader
+	 * @return
+	 * @throws IOException
+	 */
+	public RootNode parse(Reader reader) throws IOException {
+		return new Parser().parse(reader);
+	}
+	
+	/**
+	 * Parse the given markup text and emit the HTML code.
+	 * 
+	 * @param markup
+	 * @return
+	 * @throws Exception
+	 */
+	public String toHtml(String markup) throws IOException {
 		RootNode node = new Parser().parse(markup);
-		String html = new HtmlEmitter().toHtml(node);
-		return html.trim();
+		return new HtmlEmitter().toHtml(node);
+	}
+	
+	/**
+	 * Parse the markup from the given reader and emit the HTML code.
+	 *  
+	 * @param reader
+	 * @return
+	 * @throws IOException
+	 */
+	public String toHtml(Reader reader) throws IOException {
+		RootNode node = new Parser().parse(reader);
+		return new HtmlEmitter().toHtml(node);
 	}
 	
 }

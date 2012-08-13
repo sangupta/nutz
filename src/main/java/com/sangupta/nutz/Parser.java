@@ -23,6 +23,7 @@ package com.sangupta.nutz;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.Reader;
 import java.io.StringReader;
 
 import com.sangupta.nutz.ast.AbstractListNode;
@@ -44,7 +45,7 @@ import com.sangupta.nutz.ast.UnorderedListNode;
  * Parse the given markup and create an AST (abstract syntax tree),
  * 
  * @author sangupta
- *
+ * @since 0.1
  */
 public class Parser {
 
@@ -82,7 +83,7 @@ public class Parser {
 	private final TextNodeParser textNodeParser = new TextNodeParser();
 	
 	/**
-	 * Public function that parses and creates an AST of the given markup.
+	 * Parse the string-represented markup and create the AST.
 	 * 
 	 * @param markup
 	 * @return
@@ -94,7 +95,23 @@ public class Parser {
 		
 		return ROOT_NODE;
 	}
-
+	
+	/**
+	 * Parse the text stream specified by Reader and create the AST.
+	 * 
+	 * @param reader
+	 * @return
+	 * @throws IOException
+	 */
+	public RootNode parse(Reader reader) throws IOException {
+		if(!(reader instanceof BufferedReader)) {
+			this.reader = new BufferedReader(reader);
+		}
+		
+		readLines(ROOT_NODE);
+		return ROOT_NODE;
+	}
+	
 	/**
 	 * Read all lines one-by-one and create the AST.
 	 * 
