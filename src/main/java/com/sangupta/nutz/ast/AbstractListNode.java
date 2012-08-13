@@ -32,8 +32,21 @@ public abstract class AbstractListNode extends Node {
 	
 	private String tagName;
 	
+	private boolean looseItems = false;
+	
 	protected AbstractListNode(String tagName) {
 		this.tagName = tagName;
+	}
+	
+	@Override
+	public void addChild(Node node) {
+		if(!(node instanceof ListItemNode)) {
+			throw new IllegalArgumentException("Only list item nodes can be added.");
+		}
+		
+		((ListItemNode) node).setLooseItems(this.looseItems);
+		
+		super.addChild(node);
 	}
 	
 	@Override
@@ -56,11 +69,13 @@ public abstract class AbstractListNode extends Node {
 		builder.append('>');
 		builder.append(NEW_LINE);
 		
-		for(Node node : this.children) {
-			builder.append("<li>");
-			node.write(builder, true, referenceLinks);
-			builder.append("</li>");
-			builder.append(NEW_LINE);
+		if(hasChild()) {
+			for(Node node : this.children) {
+				builder.append("<li>");
+				node.write(builder, true, referenceLinks);
+				builder.append("</li>");
+				builder.append(NEW_LINE);
+			}
 		}
 		
 		builder.append("</");
@@ -70,5 +85,12 @@ public abstract class AbstractListNode extends Node {
 		builder.append(NEW_LINE);
 		builder.append(NEW_LINE);
 	}
-	
+
+	/**
+	 * @param looseItems the looseItems to set
+	 */
+	public void setLooseItems(boolean looseItems) {
+		this.looseItems = looseItems;
+	}
+
 }

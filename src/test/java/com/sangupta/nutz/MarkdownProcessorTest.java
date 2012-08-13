@@ -21,9 +21,10 @@
 
 package com.sangupta.nutz;
 
-import static junit.framework.Assert.assertEquals;
-
+import org.junit.Assert;
 import org.junit.Test;
+
+import com.sangupta.comparator.HTMLComparer;
 
 /**
  * 
@@ -36,61 +37,72 @@ public class MarkdownProcessorTest {
 	
 	@Test
 	public void testHeadings() throws Exception {
-		assertEquals("<h1>Heading</h1>", processor.toHtml("# Heading"));
-		assertEquals("<h1>Heading</h1>", processor.toHtml("# Heading #"));
-		assertEquals("<h1>Heading</h1>", processor.toHtml("# Heading ##"));
-		assertEquals("<h1>Heading</h1>", processor.toHtml("# Heading ###"));
+		check("<h1>Heading</h1>", processor.toHtml("# Heading"));
+		check("<h1>Heading</h1>", processor.toHtml("# Heading #"));
+		check("<h1>Heading</h1>", processor.toHtml("# Heading ##"));
+		check("<h1>Heading</h1>", processor.toHtml("# Heading ###"));
 		
-		assertEquals("<h2>Heading</h2>", processor.toHtml("## Heading"));
-		assertEquals("<h2>Heading</h2>", processor.toHtml("## Heading #"));
-		assertEquals("<h2>Heading</h2>", processor.toHtml("## Heading ##"));
-		assertEquals("<h2>Heading</h2>", processor.toHtml("## Heading ###"));
-		assertEquals("<h2>Heading</h2>", processor.toHtml("## Heading ####"));
+		check("<h2>Heading</h2>", processor.toHtml("## Heading"));
+		check("<h2>Heading</h2>", processor.toHtml("## Heading #"));
+		check("<h2>Heading</h2>", processor.toHtml("## Heading ##"));
+		check("<h2>Heading</h2>", processor.toHtml("## Heading ###"));
+		check("<h2>Heading</h2>", processor.toHtml("## Heading ####"));
 		
-		assertEquals("<h3>Heading</h3>", processor.toHtml("### Heading"));
-		assertEquals("<h3>Heading</h3>", processor.toHtml("### Heading #"));
-		assertEquals("<h3>Heading</h3>", processor.toHtml("### Heading ##"));
-		assertEquals("<h3>Heading</h3>", processor.toHtml("### Heading ###"));
+		check("<h3>Heading</h3>", processor.toHtml("### Heading"));
+		check("<h3>Heading</h3>", processor.toHtml("### Heading #"));
+		check("<h3>Heading</h3>", processor.toHtml("### Heading ##"));
+		check("<h3>Heading</h3>", processor.toHtml("### Heading ###"));
 		
-		assertEquals("<h4>Heading</h4>", processor.toHtml("#### Heading"));
-		assertEquals("<h4>Heading</h4>", processor.toHtml("#### Heading #"));
-		assertEquals("<h4>Heading</h4>", processor.toHtml("#### Heading ##"));
-		assertEquals("<h4>Heading</h4>", processor.toHtml("#### Heading ###"));
-		assertEquals("<h4>Heading</h4>", processor.toHtml("#### Heading####"));
+		check("<h4>Heading</h4>", processor.toHtml("#### Heading"));
+		check("<h4>Heading</h4>", processor.toHtml("#### Heading #"));
+		check("<h4>Heading</h4>", processor.toHtml("#### Heading ##"));
+		check("<h4>Heading</h4>", processor.toHtml("#### Heading ###"));
+		check("<h4>Heading</h4>", processor.toHtml("#### Heading####"));
 		
-		assertEquals("<h5>Heading</h5>", processor.toHtml("##### Heading"));
-		assertEquals("<h5>Heading</h5>", processor.toHtml("##### Heading#"));
-		assertEquals("<h5>Heading</h5>", processor.toHtml("##### Heading ##"));
-		assertEquals("<h5>Heading</h5>", processor.toHtml("##### Heading###"));
-		assertEquals("<h5>Heading</h5>", processor.toHtml("##### Heading###########"));
+		check("<h5>Heading</h5>", processor.toHtml("##### Heading"));
+		check("<h5>Heading</h5>", processor.toHtml("##### Heading#"));
+		check("<h5>Heading</h5>", processor.toHtml("##### Heading ##"));
+		check("<h5>Heading</h5>", processor.toHtml("##### Heading###"));
+		check("<h5>Heading</h5>", processor.toHtml("##### Heading###########"));
 		
-		assertEquals("<h6>Heading</h6>", processor.toHtml("###### Heading"));
-		assertEquals("<h6>Heading</h6>", processor.toHtml("###### Heading #"));
-		assertEquals("<h6>Heading</h6>", processor.toHtml("###### Heading ###"));
-		assertEquals("<h6>Heading</h6>", processor.toHtml("###### Heading ######"));
-		assertEquals("<h6>Heading</h6>", processor.toHtml("###### Heading ##########"));
-		assertEquals("<h6>Heading</h6>", processor.toHtml("###### Heading#####"));
+		check("<h6>Heading</h6>", processor.toHtml("###### Heading"));
+		check("<h6>Heading</h6>", processor.toHtml("###### Heading #"));
+		check("<h6>Heading</h6>", processor.toHtml("###### Heading ###"));
+		check("<h6>Heading</h6>", processor.toHtml("###### Heading ######"));
+		check("<h6>Heading</h6>", processor.toHtml("###### Heading ##########"));
+		check("<h6>Heading</h6>", processor.toHtml("###### Heading#####"));
 	}
 	
 	@Test
 	public void testStrong() throws Exception {
-		assertEquals("<p><strong>Heading</strong></p>", processor.toHtml(" **Heading**"));
+		check("<p><strong>Heading</strong></p>", processor.toHtml(" **Heading**"));
 	}
 	
 	@Test
 	public void testEmphasis() throws Exception {
-		assertEquals("<p><em>Heading</em></p>", processor.toHtml(" *Heading*"));
+		check("<p><em>Heading</em></p>", processor.toHtml(" *Heading*"));
 	}
 	
 	@Test
 	public void testInternalLinks() throws Exception {
-		assertEquals("<p>Here's an inline <a href=\"/script?foo=1&bar=2\">link</a>.</p>", processor.toHtml("Here's an inline [link](/script?foo=1&bar=2)."));
-		assertEquals("<p>Here's an inline <a href=\"/script?foo=1&bar=2\">link</a>.</p>", processor.toHtml("Here's an inline [link](</script?foo=1&bar=2>)."));
+		check("<p>Here's an inline <a href=\"/script?foo=1&bar=2\">link</a>.</p>", processor.toHtml("Here's an inline [link](/script?foo=1&bar=2)."));
+		check("<p>Here's an inline <a href=\"/script?foo=1&bar=2\">link</a>.</p>", processor.toHtml("Here's an inline [link](</script?foo=1&bar=2>)."));
 	}
 	
 	@Test
 	public void testCode() throws Exception {
-		assertEquals("<p><code>foo</code></p>", processor.toHtml("`foo`"));
+		check("<p><code>foo</code></p>", processor.toHtml("`foo`"));
+	}
+	
+	/**
+	 * Convenience method that allows comparing two HTML values, than doing a manual
+	 * comparison.
+	 * 
+	 * @param expected
+	 * @param actual
+	 */
+	private void check(String expected, String actual) {
+		Assert.assertTrue(HTMLComparer.compareHtml(expected, actual));
 	}
 
 }

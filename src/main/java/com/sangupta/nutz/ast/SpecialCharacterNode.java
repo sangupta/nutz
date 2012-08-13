@@ -55,6 +55,10 @@ public class SpecialCharacterNode extends TextNode {
 	 * @param character the character to set
 	 */
 	public void setCharacter(char character) {
+		if(character == '\n') {
+			throw new IllegalArgumentException("Use NewLineNode instead.");
+		}
+		
 		this.character = character;
 	}
 	

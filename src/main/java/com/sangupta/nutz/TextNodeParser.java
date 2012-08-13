@@ -29,6 +29,7 @@ import com.sangupta.nutz.ast.EmphasisNode;
 import com.sangupta.nutz.ast.HtmlCommentNode;
 import com.sangupta.nutz.ast.ImageNode;
 import com.sangupta.nutz.ast.InlineCodeNode;
+import com.sangupta.nutz.ast.NewLineNode;
 import com.sangupta.nutz.ast.Node;
 import com.sangupta.nutz.ast.ParagraphNode;
 import com.sangupta.nutz.ast.PlainTextNode;
@@ -53,8 +54,8 @@ public class TextNodeParser implements Identifiers {
 	
 	private int length;
 	
-	private ParagraphNode root = null;
-
+	private TextNode root = null;
+	
 	/**
 	 * Parse the given markup line and convert it into
 	 * many text nodes.
@@ -63,16 +64,22 @@ public class TextNodeParser implements Identifiers {
 	 * @return
 	 */
 	public TextNode parse(Node parent, String line) {
+		return parse(parent, new ParagraphNode(parent), line);
+	}
+	
+	public TextNode parse(Node parent, TextNode rootNode, String line) {
 		this.line = line;
 		this.length = line.length();
 		this.pos = 0;
 		this.lastConverted = 0;
-		this.root = new ParagraphNode(parent);
+		
+		this.root = rootNode;
 		
 		// parse into tokens
 		parse();
 		
-		return root;
+		this.root = null;
+		return rootNode;
 	}
 	
 	/**
@@ -81,6 +88,14 @@ public class TextNodeParser implements Identifiers {
 	 */
 	private void parse() {
 		do {
+			if(charAt(pos, NEW_LINE)) {
+				clearPending();
+				root.addChild(new NewLineNode(root));
+				pos++;
+				lastConverted = pos;
+				continue;
+			}
+			
 			if(charAt(pos, ESCAPE_CHARACTER)) {
 				clearPending();
 				pos++;
@@ -604,7 +619,12 @@ public class TextNodeParser implements Identifiers {
 		}
 		
 		if((lastConverted + 1) <= pos) {
-			root.addChild(new PlainTextNode(root, line.substring(lastConverted, pos)));
+			String text = line.substring(lastConverted, pos);
+			if("\n".equals(text)) {
+				root.addChild(new NewLineNode(root));
+			} else {
+				root.addChild(new PlainTextNode(root, text));
+			}
 		}
 		lastConverted = pos;
 	}

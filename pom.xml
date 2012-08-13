@@ -41,6 +41,13 @@
 		</developer>
 	</developers>
 
+	<repositories>
+		<repository>
+			<id>renejeschke-releases</id>
+			<url>http://maven.renejeschke.de</url>
+		</repository>
+	</repositories>
+
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
@@ -75,7 +82,13 @@
 		<dependency>
 			<groupId>com.sangupta</groupId>
 			<artifactId>comparator</artifactId>
-			<version>0.1.0</version>
+			<version>0.1.1-SNAPSHOT</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>com.github.rjeschke</groupId>
+			<artifactId>txtmark</artifactId>
+			<version>0.6</version>
 			<scope>test</scope>
 		</dependency>
 	</dependencies>

@@ -31,8 +31,6 @@ import java.util.Map;
  */
 public class ParagraphNode extends TextNode {
 	
-	private int current = -1;
-	
 	public ParagraphNode(Node parent) {
 		super(parent);
 	}
@@ -46,26 +44,20 @@ public class ParagraphNode extends TextNode {
 		add(node);
 	}
 
-	public boolean breakIntoTextAndHeading(int i) {
-		// find the last non-null index
-		if(current < 0) {
-			return false;
+	public boolean breakIntoTextAndHeading(int headingStyle) {
+		// remove all ending new line nodes
+		Node node;
+		while((node = lastNode()) instanceof NewLineNode) {
+			this.children.remove(node);
 		}
 		
-		if(this.children.size() == 1) {
-			Node child = this.children.get(0);
+		Node child = this.children.get(this.children.size() - 1);
+		if(child instanceof PlainTextNode) {
 			// convert this to heading node
-			HeadingNode node = new HeadingNode(i, child);
+			node = new HeadingNode(headingStyle, child);
 			this.parent.replaceNode(this, node);
 			return true;
 		}
-		
-		// this is a text node
-		// Node node = this.children.get(current);
-		
-		// convert this to a heading node
-		// TODO: fix this
-		System.out.println("FIX THIS");
 		
 		return false;
 	}
@@ -76,7 +68,6 @@ public class ParagraphNode extends TextNode {
 		}
 		
 		this.children.add(node);
-		current++;
 	}
 	
 	@Override
@@ -94,10 +85,6 @@ public class ParagraphNode extends TextNode {
 
 		// only one element
 		if(this.children.size() == 1) {
-			if(this.parent instanceof AbstractListNode) {
-				atRootNode = false;
-			}
-			
 			if(atRootNode) {
 				builder.append("<p>");
 			}
@@ -122,20 +109,6 @@ public class ParagraphNode extends TextNode {
 		}
 		
 		// handle more than one element
-		if(this.parent instanceof AbstractListNode) {
-			boolean onlySubLists = true;
-			for(int index = 1; index < this.children.size(); index++) {
-				if(!(this.children.get(index) instanceof AbstractListNode)) {
-					onlySubLists = false;
-					break;
-				}
-			}
-			
-			if(onlySubLists) {
-				atRootNode = false;
-			}
-		}
-		
 		boolean paraStart = false;
 		if(atRootNode) {
 			builder.append("<p>");
@@ -145,6 +118,24 @@ public class ParagraphNode extends TextNode {
 		for(int index = 0; index < this.children.size(); index++) {
 			Node node = this.children.get(index);
 			
+			// two simultaneous new line ndoes
+			if(node instanceof NewLineNode) {
+				// we check for 2 to make sure that we have something remaining
+				// after the two new line nodes - if there is no text
+				// after that - there is no point to switch paragrpahs
+				if((index + 2) < this.children.size()) {
+					if(this.children.get(index + 1) instanceof NewLineNode) {
+						builder.append("</p>");
+						builder.append(NEW_LINE);
+						builder.append("<p>");
+						
+						index++;
+						
+						continue;
+					}
+				}
+			}
+
 			if(node instanceof ParagraphNode) {
 				if(paraStart) {
 					builder.append("</p>");
@@ -155,14 +146,6 @@ public class ParagraphNode extends TextNode {
 				paraStart = true;
 			}
 			
-			if(paraStart && node instanceof AbstractListNode) {
-				builder.append("</p>");
-				builder.append(NEW_LINE);
-				builder.append(NEW_LINE);
-				
-				paraStart = false;
-			}
-			
 			node.write(builder, atRootNode, referenceLinks);
 		}
 		
@@ -171,10 +154,6 @@ public class ParagraphNode extends TextNode {
 				builder.append("</p>");
 			}
 			
-			if(!(this.parent instanceof AbstractListNode)) {
-				builder.append(NEW_LINE);
-				builder.append(NEW_LINE);
-			}
 		}
 	}
 	

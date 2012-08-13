@@ -53,6 +53,7 @@ public class DaringFireballTestSuite {
 	private static void runTests(List<File> tests) throws Exception {
 		int testsPass = 0;
 		int testsFail = 0;
+		int testsException = 0;
 		
 		long totalTime = 0;
 		
@@ -71,8 +72,8 @@ public class DaringFireballTestSuite {
 				html = processor.toHtml(markup);
 			} catch(Throwable t) {
 				// do nothing
-				System.out.println("Test failed (exception): " + file.getAbsolutePath());
-				testsFail++;
+					System.out.println("Test failed (exception): " + file.getAbsolutePath());
+				testsException++;
 				continue;
 			}
 			long end = System.currentTimeMillis();
@@ -88,7 +89,7 @@ public class DaringFireballTestSuite {
 			}
 		}
 		
-		System.out.println("\n\n\n\nTests pass: " + testsPass + "; fail: " + testsFail);
+		System.out.println("\n\n\n\nTests pass: " + testsPass + "; fail: " + testsFail + "; exceptioned: " + testsException);
 		System.out.println("Total time: " + totalTime + " ms.");
 	}
 	

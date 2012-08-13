@@ -24,20 +24,20 @@ package com.sangupta.nutz;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.StringReader;
-import java.util.List;
 
 import com.sangupta.nutz.ast.AbstractListNode;
 import com.sangupta.nutz.ast.BlockQuoteNode;
 import com.sangupta.nutz.ast.CodeBlockNode;
 import com.sangupta.nutz.ast.HRuleNode;
 import com.sangupta.nutz.ast.HeadingNode;
+import com.sangupta.nutz.ast.LineType;
+import com.sangupta.nutz.ast.ListItemNode;
+import com.sangupta.nutz.ast.NewLineNode;
 import com.sangupta.nutz.ast.Node;
 import com.sangupta.nutz.ast.OrderedListNode;
 import com.sangupta.nutz.ast.ParagraphNode;
 import com.sangupta.nutz.ast.PlainTextNode;
 import com.sangupta.nutz.ast.RootNode;
-import com.sangupta.nutz.ast.SpecialCharacterNode;
-import com.sangupta.nutz.ast.TextNode;
 import com.sangupta.nutz.ast.UnorderedListNode;
 
 /**
@@ -57,7 +57,7 @@ public class Parser {
 	/**
 	 * Currently read line
 	 */
-	private String line = null;
+	private TextLine line = null;
 	
 	/**
 	 * Reference to the root node of the AST
@@ -101,18 +101,36 @@ public class Parser {
 	 * @throws Exception
 	 */
 	private void readLines(Node root) throws IOException {
-		boolean readAhead = true;
+		TextLine currentLine = new TextLine("");
 		do {
-			if(readAhead) {
-				this.line = reader.readLine();
+			// the check on this.line == currentLine is intended
+			// we actually need to compare references to see
+			// if any of the downstream code read more of stuff
+			// and moved the pointer down
+			// this will allow us to consume the remaining line
+			if(this.line == null || this.line == currentLine) {
+				readLine();
 			}
+			currentLine = this.line;
 			
-			if(this.line == null) {
+			if(this.line.isNull) {
 				return;
 			}
 			
-			readAhead = parseLine(root, line);
+			this.lastNode = parseLine(root);
+			if(this.lastNode != null) {
+				root.addChild(this.lastNode);
+			}
 		} while(true);
+	}
+	
+	/**
+	 * Read one more line from the input buffer
+	 * 
+	 * @throws IOException
+	 */
+	private void readLine() throws IOException {
+		this.line = new TextLine(reader.readLine());
 	}
 
 	/**
@@ -121,234 +139,71 @@ public class Parser {
 	 * @param line
 	 * @throws Exception
 	 */
-	private boolean parseLine(Node currentRoot, String line) throws IOException {
-		final int[] spaceTokens = MarkupUtils.findLeadingSpaces(line);
-		final int leadingPosition = spaceTokens[0];
-		final int leadingSpaces = spaceTokens[1];
+	private Node parseLine(Node currentRoot) throws IOException {
+		LineType lineType = this.line.lineType;
 		
-		if(leadingSpaces == 0) {
-			if(line.startsWith("<!--")) {
-				lastNode = parseText(currentRoot, line, true);
-				currentRoot.addChild(lastNode);
-				return true;
-			}
-			
-			if(line.startsWith("#")) {
-				lastNode = parseHeading(currentRoot, line);
-				currentRoot.addChild(lastNode);
-				return true;
-			}
-			
-			// Github Extra: fenced code blocks
-			if(line.startsWith("```")) {
-				lastNode = parseFencedCodeBlock(line, "```");
-				currentRoot.addChild(lastNode);
-				return true;
-			}
-			
-			// PHP Extra: fenced code blocks
-			if(line.startsWith("~~~")) {
-				lastNode = parseFencedCodeBlock(line, "~~~");
-				currentRoot.addChild(lastNode);
-				return true;
-			}
-			
-			if(line.startsWith("===")) {
-				// turn previous text line into a heading of type H1
-				// if present, else parse this as a normal line
+		switch(lineType) {
+			case HtmlComment:
+				return parseText(currentRoot, true);
+				
+			case Heading:
+				return parseHeading(currentRoot);
+				
+			case FencedCodeBlock:
+				return parseFencedCodeBlock();
+				
+			case HeadingIndicator:
 				if(lastNode instanceof ParagraphNode) {
-					boolean broken = ((ParagraphNode) lastNode).breakIntoTextAndHeading(1);
+					int style = 1;
+					if(this.line.charAt(this.line.leadingPosition) == '-') {
+						style = 2;
+					}
+					
+					boolean broken = ((ParagraphNode) lastNode).breakIntoTextAndHeading(style);
 					if(broken) {
-						return true;
+						return null;
 					}
 				}
-			}
-			
-			if(line.startsWith("---")) {
-				// turn previous text line into a heading of type H2
-				// if present, else convert it into an HRULE
-				if(lastNode instanceof ParagraphNode) {
-					boolean broken = ((ParagraphNode) lastNode).breakIntoTextAndHeading(2);
-					if(broken) {
-						return true;
-					}
+				if(this.line.horizontalRule) {
+					return new HRuleNode();
 				}
 				
-				lastNode = new HRuleNode();
-				currentRoot.addChild(lastNode);
-				return true;
-			}
-			
-			if(line.startsWith("[")) {
-				// parse an inline link reference
-				boolean found = parseLinkReference(line, leadingPosition);
+			case UnorderedList:
+				return parseList(currentRoot, false);
+				
+			case OrderedList:
+				return parseList(currentRoot, true);
+				
+			case HRule:
+				return new HRuleNode();
+				
+			case CodeBlock:
+				return parseVerbatimBlock();
+				
+			case BlockQuote:
+				String blockText = parseBlockText();
+				RootNode rootNode = new Parser().parse(blockText);
+				return new BlockQuoteNode(rootNode);
+				
+			case Empty:
+				return new PlainTextNode(currentRoot, "\n");
+				
+			case LinkReference:
+				boolean found = parseLinkReference();
 				if(found) {
-					lastNode = null;
-					return true;
+					return null;
 				}
-			}
-			
-			if(isUnorderedList(line, leadingPosition)) {
-				// this is a list of data
-				lastNode = parseList(currentRoot, line, false, leadingPosition);
-				currentRoot.addChild(lastNode);
-				return false;
-			}
-		} /// leading spaces == 0
-		
-		if(leadingSpaces < 4) {
-			// check for reference links starts with
-			if(line.startsWith("[", leadingPosition)) {
-				boolean found = parseLinkReference(line, leadingPosition);
-				if(found) {
-					lastNode = null;
-					return true;
-				}
-			}
-
-			// check for various forms of HRULE
-			boolean found = checkForVariousHorizontalRules(currentRoot, line, leadingPosition);
-			if(found) {
-				return true;
-			}
-			
-		} // leading spaces < 4
-		
-		// check for leading spaces
-		if(leadingSpaces >= 4) {
-			// this is a verbatimn node
-			Node codeNode = parseVerbatimBlock(line);
-			if(codeNode != null) {
-				lastNode = codeNode;
-				currentRoot.addChild(lastNode);
 				
-				// one more line has just been read
-				// which needs to be parsed again
-//				parseLine(currentRoot, this.line);
+			case UnknownText:
+				return parseText(currentRoot, true);
 				
-				return false;
-			}
+			case Xml:
+				throw new IllegalArgumentException("This case has never been coded");
 		}
 		
-		// check for block quotes
-		// this is a block quote - remove the block quote symbol
-		// trim one space after this
-		// and then re-parse the line
-		if(!line.isEmpty() && leadingPosition < line.length() && line.charAt(leadingPosition) == Identifiers.HTML_OR_AUTOLINK_END) {
-
-			String blockText = parseBlockText(line);
-			RootNode rootNode = new Parser().parse(blockText);
-			BlockQuoteNode blockQuoteNode = new BlockQuoteNode(rootNode);
-
-			currentRoot.addChild(blockQuoteNode);
-			lastNode = blockQuoteNode;
-			
-			// save the node
-			return false;
-		}
-		
-		// try and see if this is an ordered list
-		if(lineStartsWithNumber(line)) {
-			lastNode = parseList(currentRoot, line, true, leadingPosition);
-			currentRoot.addChild(lastNode);
-			return false;
-		}
-		
-		// check if line is empty
-		// if so, add a new line node
-		if(line.trim().isEmpty()) {
-			lastNode = new PlainTextNode(currentRoot, "\n");
-			currentRoot.addChild(lastNode);
-			return true;
-		}
-		
-		// parse the text line reading ahead as desired
-		lastNode = parseText(currentRoot, line, true);
-		currentRoot.addChild(lastNode);
-		
-		// there may be a new line that would have been read
-		if(this.line != null) {
-			return parseLine(currentRoot, this.line);
-		}
-		
-		return true;
+		return null;
 	}
 	
-	private boolean isUnorderedList(String line, int leadingPosition) {
-		if(isUnorderedListOfChar(line, '*', leadingPosition) || isUnorderedListOfChar(line, '+', leadingPosition) || isUnorderedListOfChar(line, '-', leadingPosition)) {
-			return true;
-		}
-		
-		return false;
-	}
-	
-	private boolean isUnorderedListOfChar(String line, char terminator, int leadingPosition) {
-		if((line.startsWith(terminator + " ", leadingPosition) || line.startsWith(terminator + "\t", leadingPosition)) && !MarkupUtils.isOnlySpaceAndCharacter(line, terminator)) {
-			return true;
-		}
-		
-		return false;
-	}
-
-	/**
-	 * Create a horizontal rule of the given line if it is.
-	 * 
-	 * @param currentRoot
-	 * @param line
-	 * @param leadingPosition
-	 * @return
-	 */
-	private boolean checkForVariousHorizontalRules(Node currentRoot, String line, int leadingPosition) {
-		if(isHorizontalRule(line, leadingPosition)) {
-			lastNode = new HRuleNode();
-			currentRoot.addChild(lastNode);
-			return true;
-		}
-		
-		return false;
-	}
-	
-	/**
-	 * Checks if line data at given leading position is a horizontal rule or not.
-	 * 
-	 * @param line
-	 * @param leadingPosition
-	 * @return
-	 */
-	private boolean isHorizontalRule(String line, int leadingPosition) {
-		if(MarkupUtils.isOnlySpaceAndCharacter(line, '-')) {
-			if(line.startsWith("---", leadingPosition)) {
-				return true;
-			}
-	
-			if(line.startsWith("- - -", leadingPosition)) {
-				return true;
-			}
-		}
-
-		if(MarkupUtils.isOnlySpaceAndCharacter(line, '*')) {
-			if(line.startsWith("***", leadingPosition)) {
-				return true;
-			}
-	
-			if(line.startsWith("* * *", leadingPosition)) {
-				return true;
-			}
-		}
-		
-		if(MarkupUtils.isOnlySpaceAndCharacter(line, '_')) {
-			if(line.startsWith("___", leadingPosition)) {
-				return true;
-			}
-	
-			if(line.startsWith("_ _ _", leadingPosition)) {
-				return true;
-			}
-		}
-		
-		return false;
-	}
-
 	/**
 	 * Create a code block out of the verbatim block that has been created using
 	 * 4 starting spaces.
@@ -357,18 +212,19 @@ public class Parser {
 	 * @return
 	 * @throws IOException
 	 */
-	private CodeBlockNode parseVerbatimBlock(String line) throws IOException {
-		// make sure this is not an empty line
-		if(line.trim().length() == 0) {
+	private CodeBlockNode parseVerbatimBlock() throws IOException {
+		if(this.line.trimEmpty) {
 			return null;
 		}
 		
 		String lang = null;
 		boolean firstLine = true;
-		int leadingSpaces = -1;
 		
 		collector.setLength(0);
 		
+		int empty = 0;
+		
+doWhileLoop:		
 		do {
 			if(firstLine) {
 				int index = line.trim().indexOf('!');
@@ -378,63 +234,39 @@ public class Parser {
 						lang = line.substring(0, index).trim();
 					}
 				}
-				
-				// no language was detected
-				// let's add it to the code block
-				if(lang == null) {
-					collector.append(line);
-					collector.append('\n');
-				}
 			}
 
 			// append line to collector
-			if(!firstLine) {
+			if(!firstLine || lang == null) {
 				collector.append(line);
-				collector.append('\n');
+				collector.append(Identifiers.NEW_LINE);
 			}
 			
 			// read one more line
 			firstLine = false;
-			line = reader.readLine();
-			if(line == null) {
+			readLine();
+			if(line.isNull) {
 				break;
 			}
 			
-			leadingSpaces = MarkupUtils.findLeadingSpaces(line)[1];
-			if(!line.isEmpty() && leadingSpaces < 4) {
-				break;
+			switch(line.lineType) {
+				case CodeBlock:
+					empty = 0;
+					continue;
+					
+				case Empty:
+					empty++;
+					if(empty >= 2) {
+						break doWhileLoop;
+					}
+					continue;
+					
+				default:
+					break doWhileLoop;
 			}
 		} while(true);
 		
-		// we need to consume the current pending line
-		this.line = line;
-		
-		CodeBlockNode node = new CodeBlockNode(collector.toString(), lang);
-		return node;
-	}
-
-	/**
-	 * Test if the given line starts with a number
-	 * 
-	 * @param line2
-	 * @return
-	 */
-	private boolean lineStartsWithNumber(String line) {
-		int dot = line.indexOf('.');
-		if(dot == -1) {
-			return false;
-		}
-		
-		try {
-			Integer.parseInt(line.substring(0, dot));
-			return true;
-		} catch(NumberFormatException e) {
-			// do nothing
-			// we will continue parsing to see
-			// if any of the other tokens can match
-			// this parsing schedule
-		}
-		return false;
+		return new CodeBlockNode(collector.toString(), lang);
 	}
 
 	/**
@@ -444,8 +276,8 @@ public class Parser {
 	 * @param line
 	 * @return
 	 */
-	private boolean parseLinkReference(String line, int leadingPosition) {
-		int index = line.indexOf(']');
+	private boolean parseLinkReference() {
+		int index = this.line.indexOf(']');
 		if(index == -1) {
 			return false;
 		}
@@ -454,13 +286,14 @@ public class Parser {
 			return false;
 		}
 		
-		String id = line.substring(leadingPosition + 1, index);
-		String link = line.substring(index + 2).trim();
+		String id = this.line.substring(this.line.leadingPosition + 1, index);
+		String link = this.line.substring(index + 2).trim();
 		
 		// extract any title if available
 		String[] tokens = MarkupUtils.parseLinkAndTitle(link);
 		
 		ROOT_NODE.addReferenceLink(id, tokens[0].trim(), tokens[1]);
+		
 		return true;
 	}
 
@@ -471,172 +304,199 @@ public class Parser {
 	 * @return
 	 * @throws IOException
 	 */
-	private Node parseList(Node currentRoot, String line, boolean ordered, final int currentLeadingPosition) throws IOException {
-		Node listNode;
+	private Node parseList(Node currentRoot, boolean ordered) throws IOException {
+		AbstractListNode listNode;
 		if(ordered) {
 			listNode = new OrderedListNode();
 		} else {
 			listNode = new UnorderedListNode();
 		}
 		
-		int trimLocation = 1;
-		boolean newLineEncountered = false;
-		boolean paragraphsAdded = false;
-		boolean isParsed = true;
+		// we store current lists leading position
+		// this will help us identify child lists
+		final int thisListsLeadingPosition = this.line.leadingPosition;
 		
+		StringBuilder collector = new StringBuilder(512);
+		int looseEntries = 0;
+		int empty = 0;
+		ListItemNode lastChildNode = null;
+		boolean hangingText = false;
+		
+doWhileLoop:
 		do {
-			trimLocation = 1;
-
-			if(isParsed) {
-				if(!line.isEmpty()) {
-					if(ordered) {
-						if(line.charAt(1) == Identifiers.DOT) {
-							trimLocation = 2;
-						}
-					}
-					
-					line = line.substring(trimLocation).trim();
-					listNode.addChild(textNodeParser.parse(listNode, line));
-				}
-	
-				// read a new line
-				line = reader.readLine();
-			}
-
-			if(line == null) {
-				break;
+			LineType lineType = this.line.lineType;
+			
+			if(lineType == null) {
+				break doWhileLoop;
 			}
 			
-			// check for termination of block
-			boolean probablyBreak = false;
-			if(!line.isEmpty()) {
-				if(ordered) {
-					if(!lineStartsWithNumber(line)) {
-						probablyBreak = true;
-					}
-				} else {
-					if(line.startsWith("*") || line.startsWith("+") || line.startsWith("-")) {
-						if(isHorizontalRule(line, 0)) {
-							break;
-						}
-					} else {
-						probablyBreak = true;
-					}
-				}
-				
-				if(!probablyBreak) {
-					if(newLineEncountered) {
-						// this means that there was a new line between this line
-						// and the previous non-empty line
-						// and thus we need to add a para tag
-						// around the list item
-						listNode.lastNode().addChild(new SpecialCharacterNode(listNode, '\n'));
-						paragraphsAdded = true;
-					} else {
-						paragraphsAdded = false;
-					}
-					
-					newLineEncountered = false;
-				}
-			} else {
-				newLineEncountered = true;
-				
-				// break out if we are in a nested list
-				if(currentRoot instanceof AbstractListNode) {
-					break;
+			// check for sublists
+			if(lineType == LineType.CodeBlock) {
+				if(this.line.isUnorderedList()) {
+					lineType = LineType.UnorderedList;
+				} else if(this.line.lineStartsWithNumber()) {
+					lineType = LineType.OrderedList;
 				}
 			}
 			
-			// this check ensures that we do not exit from creating a list item
-			// in case this is a continuation list item text
-			if(probablyBreak) {
-				int[] tokens = MarkupUtils.findLeadingSpaces(line);
-				
-				final int leadingPosition = tokens[0];
-				final int leadingSpaces = tokens[1];
-				
-				if(leadingSpaces > trimLocation) {
-					// we must also check if the leading position is the same
-					// as in the current item
-					// if it is greater than the current leading position
-					// it is a child list
-					boolean childListEncountered = false;
-					if(tokens[0] > currentLeadingPosition) {
-						childListEncountered = true;
+			switch(lineType) {
+				case OrderedList:
+				case UnorderedList:
+					if(collector.length() > 0) {
+						String text = collector.toString();
+						collector.setLength(0);
 						
-						// we have a new child list
-						// create a new child list element
-						boolean childOrdered = false;
-						if(isUnorderedList(line, leadingPosition)) {
-							// do nothing
-						} else if(lineStartsWithNumber(line)) {
-							childOrdered = true;
-						} else {
-							// this is normal text
-							childListEncountered = false;
-						}
-						
-						if(childListEncountered) {
-							Node childListNode = parseList(listNode, line.substring(leadingPosition), childOrdered, tokens[0]);
-							listNode.lastNode().addChild(childListNode);
-							
-							// this will keep recursion happy
-							line = this.line;
-							
-							isParsed = false;
-							continue;
-						}
-					}
-					
-					if(leadingPosition < currentLeadingPosition) {
-						// this means we are done with the child list
-						// and need to break out
-						break;
-					}
-					
-					if(leadingPosition == currentLeadingPosition) {
-						line = line.substring(leadingPosition);
-
-						// we have a list item
-						isParsed = true;
-						continue;
-					}
-
-					if(!childListEncountered) {
-						// this is a continuation
-						// add the text to previous node
-						TextNode textNode = textNodeParser.parse(listNode, line);
-						
-						if(newLineEncountered) {
-							listNode.lastNode().addChild(textNode);
-						} else {
-							List<Node> nodes = textNode.getChildren();
-							for(Node child : nodes) {
-								listNode.lastNode().addChild(child);
+						// check for loose mode
+						if(listNode.getChildren() == null) {
+							if(empty > 0) {
+								listNode.setLooseItems(true);
 							}
 						}
-						line = "";
+						
+						lastChildNode = (ListItemNode) this.textNodeParser.parse(listNode, new ListItemNode(listNode), text);
+						if(!hangingText) {
+							listNode.addChild(lastChildNode);
+						} else {
+							listNode.lastNode().addChild(lastChildNode);
+						}
+						
+						hangingText = false;
 					}
-				} else {
+					
+					// check for child lists
+					if(this.line.leadingPosition > thisListsLeadingPosition) {
+						// we have encountered a child list
+						// read a new child list
+						Node childList = parseList(listNode, this.line.lineType == LineType.OrderedList ? true : false);
+						
+						// get current element of the list
+						Node currentElementInList = listNode.lastNode();
+						currentElementInList.addChild(childList);
+						
+						switch(this.line.lineType) {
+							case OrderedList:
+							case UnorderedList:
+								break;
+								
+							case CodeBlock:
+							case UnknownText:
+								hangingText = true;
+								break;
+								
+							default:
+								break doWhileLoop;
+						}
+						
+						// continue and process the new line
+						continue;
+					}
+					
+					if(this.line.leadingPosition < thisListsLeadingPosition) {
+						// break out
+						// we are done creating a child list
+						break doWhileLoop;
+					}
+					
+					String text = this.line.getText();
+					
+					int start = this.line.leadingPosition + 1;
+					if(ordered) {
+						int dot = this.line.indexOf('.');
+						start = dot + 1;
+					} else {
+						start = this.line.leadingPosition + 1;
+					}
+
+					// extract the text
+					if(isWhiteSpace(text.charAt(start))) {
+						text = text.substring(++start);
+					} else {
+						text = text.substring(start);
+					}
+					
+					// append to collector
+					collector.append(text);
+					collector.append(Identifiers.NEW_LINE);
+					empty = 0;
 					break;
-				}
-				
-				newLineEncountered = false;
+					
+				case UnknownText:
+				case CodeBlock:
+					// break off on sub lists
+					if(this.line.leadingPosition <= thisListsLeadingPosition) {
+						// break out
+						// we are done creating a child list
+						break doWhileLoop;
+					}
+					
+					if(empty == 0 || (lineType == LineType.CodeBlock) && (empty < 2)) {
+						collector.append(this.line.getText());
+						collector.append(Identifiers.NEW_LINE);
+					} else {
+						break doWhileLoop;
+					}
+					
+					empty = 0;
+					break;
+					
+				case Empty:
+					empty++;
+					looseEntries++;
+					collector.append(this.line.getText());
+					collector.append(Identifiers.NEW_LINE);
+					if(empty == 2) {
+						break doWhileLoop;
+					}
+					break;
+
+				// for all other line types break off
+				default:
+					break doWhileLoop;
 			}
 			
-			isParsed = true;
+			readLine();
+			
+			if(this.line.isNull) {
+				break;
+			}
 		} while(true);
-
-		// if paragraphs were added last - then it needs to be added to the last node element
 		
-		if(paragraphsAdded) {
-			listNode.lastNode().addChild(new SpecialCharacterNode(listNode, '\n'));
+		// set the last element
+		if(collector.length() > 0) {
+			String text = collector.toString();
+			if(looseEntries == empty) {
+				do {
+					if(text.endsWith("\n\n")) {
+						text = text.substring(0, text.length() - 1);
+					} else {
+						break;
+					}
+				} while(true);
+			}
+			
+			lastChildNode = (ListItemNode) this.textNodeParser.parse(listNode, new ListItemNode(listNode), text);
+			
+			if(!hangingText) {
+				listNode.addChild(lastChildNode);
+			} else {
+				listNode.lastNode().addChild(lastChildNode);
+			}
 		}
 		
-		// reset
-		this.line = line;
-		
 		return listNode;
+	}
+
+	private boolean isWhiteSpace(char ch) {
+		switch(ch) {
+			case Identifiers.SPACE:
+			case Identifiers.TAB:
+				return true;
+
+			default:
+				break;
+		}
+		
+		return false;
 	}
 
 	/**
@@ -645,9 +505,11 @@ public class Parser {
 	 * @param line
 	 * @return
 	 */
-	private CodeBlockNode parseFencedCodeBlock(String line, String terminator) throws IOException {
+	private CodeBlockNode parseFencedCodeBlock() throws IOException {
 		String language = null;
-		if(line.length() > 3) {
+		char terminator = this.line.terminator;
+		
+		if(line.length > 3) {
 			language = line.substring(3);
 		}
 		
@@ -656,7 +518,7 @@ public class Parser {
 		// start reading more lines
 		// till we get an ending fenced code block
 		do {
-			line = reader.readLine();
+			readLine();
 			if(line.startsWith(terminator)) {
 				break;
 			}
@@ -676,7 +538,7 @@ public class Parser {
 	 * @return
 	 * @throws Exception
 	 */
-	private HeadingNode parseHeading(Node currentRoot, String line) throws IOException {
+	private HeadingNode parseHeading(Node currentRoot) throws IOException {
 		int headCount = 1;
 		int index = 1;
 		do {
@@ -690,10 +552,10 @@ public class Parser {
 		} while(true);
 
 		// strip off all hash signs per the last non-hash character
-		line = line.trim();
-		index = line.length();
+		this.line.trim();
+		index = this.line.length;
 		do {
-			if(line.charAt(index - 1) == '#') {
+			if(this.line.charAt(index - 1) == '#') {
 				// skip
 			} else {
 				break;
@@ -702,10 +564,13 @@ public class Parser {
 			index--;
 		} while(true);
 		
-		line = line.substring(headCount, index).trim();
+		this.line = new TextLine(this.line.substring(headCount, index).trim());
 		
-		Node textNode = parseText(currentRoot, line, false);
+		Node textNode = parseText(currentRoot, false);
 		HeadingNode heading = new HeadingNode(headCount, textNode);
+		
+		this.line = null;
+		
 		return heading;
 	}
 	
@@ -717,76 +582,72 @@ public class Parser {
 	 * @return
 	 * @throws Exception
 	 */
-	private Node parseText(Node currentRoot, String readLine, boolean fetchMoreLines) throws IOException {
+	private Node parseText(Node currentRoot, boolean fetchMoreLines) throws IOException {
 		if(!fetchMoreLines) {
-			return textNodeParser.parse(currentRoot, readLine);
+			return textNodeParser.parse(currentRoot, this.line.getText());
 		}
 		
-		if(readLine.isEmpty()) {
-			this.line = null;
-			return new ParagraphNode(currentRoot, "\n");
+		if(this.line.trimEmpty) {
+			return new NewLineNode(currentRoot);
 		}
 		
 		collector.setLength(0);
 		do {
-			if(readLine.isEmpty()) {
+			if(this.line.isEmpty) {
 				// this is a break for a new line
 				// exit now
 				break;
 			}
 			
-			collector.append(readLine);
+			collector.append(this.line.getText());
 			collector.append('\n');
 			
-			if(readLine.endsWith("  ")) {
-				line = reader.readLine();
+			if(this.line.endsWith("  ")) {
+				this.line = new TextLine(reader.readLine());
 				break;
 			}
 
-			line = reader.readLine();
-			if(line == null || line.isEmpty()) {
+			this.line = new TextLine(reader.readLine());
+			if(line == null || line.isEmpty) {
 				break;
 			}
 			
 			// this signifies a presence of heading
 			// need to break here
-			if(line.startsWith("===") || line.startsWith("---")) {
+			if(this.line.startsWith("===") || this.line.startsWith("---")) {
 				break;
 			}
-			
-			readLine = line;
 		} while(true);
 		
 		return textNodeParser.parse(currentRoot, collector.toString());
 	}
 	
-	private String parseBlockText(String line) throws IOException {
+	private String parseBlockText() throws IOException {
 		StringBuilder builder = new StringBuilder(1024);
 		
 		int index = -1;
+		String text;
 		do {
 			index = line.indexOf('>');
 
 			if(index >= 0) {
 				index++;
-				if(index < line.length() && line.charAt(index) == Identifiers.SPACE) {
-					line = line.substring(index + 1);
+				if(index < line.length && line.charAt(index) == Identifiers.SPACE) {
+					text = line.substring(index + 1);
 				} else {
-					line = line.substring(index);
+					text = line.substring(index);
 				}
 
-				builder.append(line);
+				builder.append(text);
 				builder.append(Identifiers.NEW_LINE);
 			}
 			
-			line = reader.readLine();
+			readLine();
 			
-			if(line == null) {
+			if(this.line.isNull) {
 				break;
 			}
 		} while(index >= 0);
-		
-		this.line = line;
 		
 		return builder.toString();
 	}
