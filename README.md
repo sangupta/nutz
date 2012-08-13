@@ -23,7 +23,6 @@ Features
 * Support for standard Markdown syntax per Daring Fireball suite
 * Suport for PHP fenced code blocks
 * Support for Github-Flavored fenced code blocks
-* Support for syntax-highlighting techniques in code blocks (using Syntax-Highlighter or [Pepmint](https://www.sangupta.com/sangupta/pepmint)
 * All 23 tests pass
 
 RoadMap
@@ -36,6 +35,20 @@ RoadMap
 * URL auto-linking
 * Support for text-transformers
 * Support for turning on/off extensions
+* Support for syntax-highlighting techniques in code blocks (using Syntax-Highlighter or [Pepmint](https://www.sangupta.com/sangupta/pepmint)
+
+Downloads
+---------
+
+The working development version can be downloaded from:
+
+```xml
+<dependency>
+    <groupId>com.sangupta</groupId>
+    <artifactId>nutz</artifactId>
+    <version>0.4.0</version>
+</dependency>
+```
 
 Continuous Integration
 ----------------------
