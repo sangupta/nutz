@@ -21,88 +21,75 @@
 
 package com.sangupta.nutz;
 
-import org.junit.Assert;
+import java.io.IOException;
+
 import org.junit.Test;
 
-import com.sangupta.comparator.HTMLComparer;
-
 /**
+ * Simple tests that test against one given rule of markup at a time.
  * 
  * @author sangupta
  *
  */
-public class MarkdownProcessorTest {
-	
-	private MarkdownProcessor processor = new MarkdownProcessor();
+public class MarkdownProcessorTest extends AbstractHtmlTests {
 	
 	@Test
-	public void testHeadings() throws Exception {
-		check("<h1>Heading</h1>", processor.toHtml("# Heading"));
-		check("<h1>Heading</h1>", processor.toHtml("# Heading #"));
-		check("<h1>Heading</h1>", processor.toHtml("# Heading ##"));
-		check("<h1>Heading</h1>", processor.toHtml("# Heading ###"));
+	public void testHeadings() throws IOException {
+		testMarkup("<h1>Heading</h1>", "# Heading");
+		testMarkup("<h1>Heading</h1>", "# Heading #");
+		testMarkup("<h1>Heading</h1>", "# Heading ##");
+		testMarkup("<h1>Heading</h1>", "# Heading ###");
 		
-		check("<h2>Heading</h2>", processor.toHtml("## Heading"));
-		check("<h2>Heading</h2>", processor.toHtml("## Heading #"));
-		check("<h2>Heading</h2>", processor.toHtml("## Heading ##"));
-		check("<h2>Heading</h2>", processor.toHtml("## Heading ###"));
-		check("<h2>Heading</h2>", processor.toHtml("## Heading ####"));
+		testMarkup("<h2>Heading</h2>", "## Heading");
+		testMarkup("<h2>Heading</h2>", "## Heading #");
+		testMarkup("<h2>Heading</h2>", "## Heading ##");
+		testMarkup("<h2>Heading</h2>", "## Heading ###");
+		testMarkup("<h2>Heading</h2>", "## Heading ####");
 		
-		check("<h3>Heading</h3>", processor.toHtml("### Heading"));
-		check("<h3>Heading</h3>", processor.toHtml("### Heading #"));
-		check("<h3>Heading</h3>", processor.toHtml("### Heading ##"));
-		check("<h3>Heading</h3>", processor.toHtml("### Heading ###"));
+		testMarkup("<h3>Heading</h3>", "### Heading");
+		testMarkup("<h3>Heading</h3>", "### Heading #");
+		testMarkup("<h3>Heading</h3>", "### Heading ##");
+		testMarkup("<h3>Heading</h3>", "### Heading ###");
 		
-		check("<h4>Heading</h4>", processor.toHtml("#### Heading"));
-		check("<h4>Heading</h4>", processor.toHtml("#### Heading #"));
-		check("<h4>Heading</h4>", processor.toHtml("#### Heading ##"));
-		check("<h4>Heading</h4>", processor.toHtml("#### Heading ###"));
-		check("<h4>Heading</h4>", processor.toHtml("#### Heading####"));
+		testMarkup("<h4>Heading</h4>", "#### Heading");
+		testMarkup("<h4>Heading</h4>", "#### Heading #");
+		testMarkup("<h4>Heading</h4>", "#### Heading ##");
+		testMarkup("<h4>Heading</h4>", "#### Heading ###");
+		testMarkup("<h4>Heading</h4>", "#### Heading####");
 		
-		check("<h5>Heading</h5>", processor.toHtml("##### Heading"));
-		check("<h5>Heading</h5>", processor.toHtml("##### Heading#"));
-		check("<h5>Heading</h5>", processor.toHtml("##### Heading ##"));
-		check("<h5>Heading</h5>", processor.toHtml("##### Heading###"));
-		check("<h5>Heading</h5>", processor.toHtml("##### Heading###########"));
+		testMarkup("<h5>Heading</h5>", "##### Heading");
+		testMarkup("<h5>Heading</h5>", "##### Heading#");
+		testMarkup("<h5>Heading</h5>", "##### Heading ##");
+		testMarkup("<h5>Heading</h5>", "##### Heading###");
+		testMarkup("<h5>Heading</h5>", "##### Heading###########");
 		
-		check("<h6>Heading</h6>", processor.toHtml("###### Heading"));
-		check("<h6>Heading</h6>", processor.toHtml("###### Heading #"));
-		check("<h6>Heading</h6>", processor.toHtml("###### Heading ###"));
-		check("<h6>Heading</h6>", processor.toHtml("###### Heading ######"));
-		check("<h6>Heading</h6>", processor.toHtml("###### Heading ##########"));
-		check("<h6>Heading</h6>", processor.toHtml("###### Heading#####"));
+		testMarkup("<h6>Heading</h6>", "###### Heading");
+		testMarkup("<h6>Heading</h6>", "###### Heading #");
+		testMarkup("<h6>Heading</h6>", "###### Heading ###");
+		testMarkup("<h6>Heading</h6>", "###### Heading ######");
+		testMarkup("<h6>Heading</h6>", "###### Heading ##########");
+		testMarkup("<h6>Heading</h6>", "###### Heading#####");
 	}
 	
 	@Test
-	public void testStrong() throws Exception {
-		check("<p><strong>Heading</strong></p>", processor.toHtml(" **Heading**"));
+	public void testStrong() throws IOException {
+		testMarkup("<p><strong>Heading</strong></p>", " **Heading**");
 	}
 	
 	@Test
-	public void testEmphasis() throws Exception {
-		check("<p><em>Heading</em></p>", processor.toHtml(" *Heading*"));
+	public void testEmphasis() throws IOException {
+		testMarkup("<p><em>Heading</em></p>", " *Heading*");
 	}
 	
 	@Test
-	public void testInternalLinks() throws Exception {
-		check("<p>Here's an inline <a href=\"/script?foo=1&bar=2\">link</a>.</p>", processor.toHtml("Here's an inline [link](/script?foo=1&bar=2)."));
-		check("<p>Here's an inline <a href=\"/script?foo=1&bar=2\">link</a>.</p>", processor.toHtml("Here's an inline [link](</script?foo=1&bar=2>)."));
+	public void testInternalLinks() throws IOException {
+		testMarkup("<p>Here's an inline <a href=\"/script?foo=1&bar=2\">link</a>.</p>", "Here's an inline [link](/script?foo=1&bar=2).");
+		testMarkup("<p>Here's an inline <a href=\"/script?foo=1&bar=2\">link</a>.</p>", "Here's an inline [link](</script?foo=1&bar=2>).");
 	}
 	
 	@Test
-	public void testCode() throws Exception {
-		check("<p><code>foo</code></p>", processor.toHtml("`foo`"));
+	public void testCode() throws IOException {
+		testMarkup("<p><code>foo</code></p>", "`foo`");
 	}
 	
-	/**
-	 * Convenience method that allows comparing two HTML values, than doing a manual
-	 * comparison.
-	 * 
-	 * @param expected
-	 * @param actual
-	 */
-	private void check(String expected, String actual) {
-		Assert.assertTrue(HTMLComparer.compareHtml(expected, actual));
-	}
-
 }
