@@ -26,14 +26,21 @@ import java.util.Map;
 import com.sangupta.nutz.HtmlEscapeUtils;
 
 /**
+ * Represents a fenced code block in the AST.
  * 
  * @author sangupta
  *
  */
 public class CodeBlockNode extends Node {
 	
+	/**
+	 * The language value of this fenced code block - if specified.
+	 */
 	private String language;
 	
+	/**
+	 * Actual code that is stored in this node.
+	 */
 	private String code;
 	
 	public CodeBlockNode(String code, String lang) {
