@@ -82,7 +82,7 @@
 		<dependency>
 			<groupId>com.sangupta</groupId>
 			<artifactId>comparator</artifactId>
-			<version>0.1.1-SNAPSHOT</version>
+			<version>0.1.1</version>
 			<scope>test</scope>
 		</dependency>
 		<dependency>

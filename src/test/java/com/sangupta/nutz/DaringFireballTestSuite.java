@@ -22,75 +22,87 @@
 package com.sangupta.nutz;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
+import java.io.IOException;
 
 import org.apache.commons.io.FileUtils;
+import org.junit.Assert;
+import org.junit.Test;
 
 import com.sangupta.comparator.HTMLComparer;
 
 /**
+ * Test suite that executes all 23 tests of Daring Fireball's Markdown
+ * test bundle.
  * 
  * @author sangupta
- *
+ * @since 0.1
  */
 public class DaringFireballTestSuite {
 	
+	/**
+	 * Utility main method that allows running of test suite from the
+	 * command line.
+	 * 
+	 * @param args
+	 * @throws Exception
+	 */
 	public static void main(String[] args) throws Exception {
+		DaringFireballTestSuite testSuite = new DaringFireballTestSuite();
+		testSuite.executeDaringFireballTestSuite();
+	}
+	
+	@Test
+	public void executeDaringFireballTestSuite() throws IOException {
+		Assert.assertTrue(runIndividualTest("Amps and angle encoding"));
+		Assert.assertTrue(runIndividualTest("Auto links"));
+		Assert.assertTrue(runIndividualTest("Backslash escapes"));
+		Assert.assertTrue(runIndividualTest("Blockquotes with code blocks"));
+		Assert.assertTrue(runIndividualTest("Code Blocks"));
+		Assert.assertTrue(runIndividualTest("Code Spans"));
+		Assert.assertTrue(runIndividualTest("Hard-wrapped paragraphs with list-like lines"));
+		Assert.assertTrue(runIndividualTest("Horizontal rules"));
+		Assert.assertTrue(runIndividualTest("Images"));
+		Assert.assertTrue(runIndividualTest("Inline HTML (Advanced)"));
+		Assert.assertTrue(runIndividualTest("Inline HTML (Simple)"));
+		Assert.assertTrue(runIndividualTest("Inline HTML comments"));
+		Assert.assertTrue(runIndividualTest("Links, inline style"));
+		Assert.assertTrue(runIndividualTest("Links, reference style"));
+		Assert.assertTrue(runIndividualTest("Links, shortcut references"));
+		Assert.assertTrue(runIndividualTest("Literal quotes in titles"));
+		Assert.assertTrue(runIndividualTest("Markdown Documentation - Basics"));
+		Assert.assertTrue(runIndividualTest("Markdown Documentation - Syntax"));
+		Assert.assertTrue(runIndividualTest("Nested blockquotes"));
+		Assert.assertTrue(runIndividualTest("Ordered and unordered lists"));
+		Assert.assertTrue(runIndividualTest("Strong and em together"));
+		Assert.assertTrue(runIndividualTest("Tabs"));
+		Assert.assertTrue(runIndividualTest("Tidyness"));
+	}
+	
+	private boolean runIndividualTest(String testName) throws IOException {
 		File dir = new File("src/test/resources/markdown");
-		File[] files = dir.listFiles();
-		
-		List<File> tests = new ArrayList<File>();
-		for(File file : files) {
-			if(file.getName().endsWith(".text")) {
-				tests.add(file);
-			}
-		}
-		
-		runTests(tests);
+		return executeSingleTest(new File(dir, testName + ".text"));
 	}
 
-	private static void runTests(List<File> tests) throws Exception {
-		int testsPass = 0;
-		int testsFail = 0;
-		int testsException = 0;
+	private boolean executeSingleTest(final File file) throws IOException {
+		String originalHTML = file.getAbsolutePath();
+		originalHTML = originalHTML.replace(".text", ".html");
+		originalHTML = FileUtils.readFileToString(new File(originalHTML));
 		
-		long totalTime = 0;
+		final String markup = FileUtils.readFileToString(file);
+		MarkdownProcessor processor = new MarkdownProcessor();
 		
-		for(File file : tests) {
-			String output = file.getAbsolutePath();
-			output = output.replace(".text", ".html");
-			output = FileUtils.readFileToString(new File(output));
-			
-			String markup = FileUtils.readFileToString(file);
-			MarkdownProcessor processor = new MarkdownProcessor();
-			
-			String html = null;
+		String processedHTML = null;
 
-			long start = System.currentTimeMillis();
-			try {
-				html = processor.toHtml(markup);
-			} catch(Throwable t) {
-				// do nothing
-					System.out.println("Test failed (exception): " + file.getAbsolutePath());
-				testsException++;
-				continue;
-			}
-			long end = System.currentTimeMillis();
-			
-			totalTime += (end - start);
-			
-			if(HTMLComparer.compareHtml(output, html)) {
-				System.out.println("Test PASS: " + file.getAbsolutePath());
-				testsPass++;
-			} else {
-				System.out.println("Test failed: " + file.getAbsolutePath());
-				testsFail++;
-			}
+		try {
+			processedHTML = processor.toHtml(markup);
+		} catch(Throwable t) {
+			// do nothing
 		}
-		
-		System.out.println("\n\n\n\nTests pass: " + testsPass + "; fail: " + testsFail + "; exceptioned: " + testsException);
-		System.out.println("Total time: " + totalTime + " ms.");
+		if(HTMLComparer.compareHtml(originalHTML, processedHTML)) {
+			return true;
+		} else {
+			return false;
+		}
 	}
 	
 }

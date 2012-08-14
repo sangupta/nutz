@@ -26,6 +26,8 @@ import java.util.List;
 import java.util.Map;
 
 /**
+ * An abstract node in the AST. Provides common functionality for all types of 
+ * nodes.
  * 
  * @author sangupta
  *
@@ -92,31 +94,17 @@ public abstract class Node {
 		}
 	}
 	
+	/**
+	 * Output the contents of this node to the builder.
+	 * 
+	 * @param builder
+	 * @param atRootNode
+	 * @param referenceLinks
+	 */
 	public void write(StringBuilder builder, boolean atRootNode, Map<String, AnchorNode> referenceLinks) {
 		builder.append(this.toString());
 	}
 	
-	/**
-	 * Debug function that prints the tree of this Node
-	 * 
-	 */
-	public void print(int level) {
-		for(int i = 0; i < (level * 4); i++) {
-			System.out.print(" ");
-		}
-		
-		System.out.println(this.toString());
-
-		if(!(this instanceof ParagraphNode) && this.children != null && this.children.size() > 0) {
-			System.out.print("\n");
-			for(Node node : this.children) {
-				node.print(level + 1);
-			}
-		}
-
-		System.out.print("\n");
-	}
-
 	// Usual accessors follow
 
 	/**

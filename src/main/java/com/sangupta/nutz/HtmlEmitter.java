@@ -24,12 +24,42 @@ package com.sangupta.nutz;
 import com.sangupta.nutz.ast.RootNode;
 
 /**
+ * Default HTML emitter that generates HTML representation of the
+ * given {@link RootNode}.
  * 
  * @author sangupta
- *
+ * @since 0.1
  */
 public class HtmlEmitter {
+	
+	/**
+	 * Processing options to be used when generating HTML code
+	 */
+	private ProcessingOptions options;
+	
+	/**
+	 * Default constructor that uses default processing options.
+	 */
+	public HtmlEmitter() {
+		this.options = new ProcessingOptions();
+	}
+	
+	/**
+	 * Construct an instance of this emitter and use the given processing
+	 * options.
+	 * 
+	 * @param options
+	 */
+	public HtmlEmitter(ProcessingOptions options) {
+		this.options = options;
+	}
 
+	/**
+	 * Emit the HTML code for the given root node.
+	 * 
+	 * @param root
+	 * @return
+	 */
 	public String toHtml(RootNode root) {
 		if(root == null) {
 			throw new IllegalArgumentException("Root node cannot be null.");

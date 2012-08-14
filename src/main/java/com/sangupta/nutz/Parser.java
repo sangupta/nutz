@@ -53,34 +53,76 @@ public class Parser {
 	 * Internal reader that reads line by line from the markup
 	 * provided.
 	 */
-	private BufferedReader reader = null;
+	protected BufferedReader reader = null;
 	
 	/**
 	 * Currently read line
 	 */
-	private TextLine line = null;
+	protected TextLine line = null;
 	
 	/**
 	 * Reference to the root node of the AST
 	 */
-	private final RootNode ROOT_NODE = new RootNode();
+	protected final RootNode ROOT_NODE = new RootNode();
 	
 	/**
 	 * A collector that is used to collect data when we enter
 	 * an iterative function that needs look ahead.
 	 */
-	private StringBuilder collector = new StringBuilder(1024);
+	protected StringBuilder collector = new StringBuilder(1024);
 	
 	/**
 	 * Reference to the last node that was added to the AST
 	 */
-	private Node lastNode = null;
+	protected Node lastNode = null;
 	
 	/**
 	 * Internal reference to the {@link TextNodeParser} that is used to
 	 * parse text nodes recursively.
 	 */
-	private final TextNodeParser textNodeParser = new TextNodeParser();
+	protected TextNodeParser textNodeParser;
+	
+	/**
+	 * Specifies the options that are to be used when parsing and emitting
+	 * HTML code.
+	 */
+	protected ProcessingOptions options = null;
+	
+	/**
+	 * Default constructor that creates an instance of this parser
+	 * enabling all default extensions.
+	 */
+	public Parser() {
+		this.options = new ProcessingOptions();
+		reset();
+	}
+	
+	/**
+	 * Contruct a new instance of this parser and set the provided
+	 * processing options to be used.
+	 * 
+	 * @param processingOptions
+	 */
+	public Parser(ProcessingOptions processingOptions) {
+		this.options = processingOptions;
+		reset();
+	}
+	
+	/**
+	 * Reset internal state
+	 */
+	protected void reset() {
+		this.line = null;
+		this.lastNode = null;
+		this.collector.setLength(0);
+		if(ROOT_NODE.getReferenceLinks() != null) {
+			ROOT_NODE.getReferenceLinks().clear();
+		}
+		
+		if(ROOT_NODE.getChildren() != null) {
+			ROOT_NODE.getChildren().clear();
+		}
+	}		
 	
 	/**
 	 * Parse the string-represented markup and create the AST.
@@ -91,8 +133,8 @@ public class Parser {
 	 */
 	public RootNode parse(String markup) throws IOException {
 		reader = new BufferedReader(new StringReader(markup));
+		reset();
 		readLines(ROOT_NODE);
-		
 		return ROOT_NODE;
 	}
 	
@@ -107,7 +149,7 @@ public class Parser {
 		if(!(reader instanceof BufferedReader)) {
 			this.reader = new BufferedReader(reader);
 		}
-		
+		reset();
 		readLines(ROOT_NODE);
 		return ROOT_NODE;
 	}
@@ -117,8 +159,21 @@ public class Parser {
 	 * 
 	 * @throws Exception
 	 */
-	private void readLines(Node root) throws IOException {
-		TextLine currentLine = new TextLine("");
+	protected void readLines(Node root) throws IOException {
+		// create a text node parser
+		// this is done later to make sure that it can be overridden
+		// in child implementations
+		if(this.textNodeParser == null) {
+			this.textNodeParser = new TextNodeParser();
+		}
+
+		// reset all values
+		// clear up any current collector
+		lastNode = null;
+		collector.setLength(0);
+		
+		// start parsing
+		TextLine currentLine = new TextLine("", this.options);
 		do {
 			// the check on this.line == currentLine is intended
 			// we actually need to compare references to see
@@ -146,8 +201,8 @@ public class Parser {
 	 * 
 	 * @throws IOException
 	 */
-	private void readLine() throws IOException {
-		this.line = new TextLine(reader.readLine());
+	protected void readLine() throws IOException {
+		this.line = new TextLine(reader.readLine(), this.options);
 	}
 
 	/**
@@ -156,7 +211,7 @@ public class Parser {
 	 * @param line
 	 * @throws Exception
 	 */
-	private Node parseLine(Node currentRoot) throws IOException {
+	protected Node parseLine(Node currentRoot) throws IOException {
 		LineType lineType = this.line.lineType;
 		
 		switch(lineType) {
@@ -229,7 +284,7 @@ public class Parser {
 	 * @return
 	 * @throws IOException
 	 */
-	private CodeBlockNode parseVerbatimBlock() throws IOException {
+	protected CodeBlockNode parseVerbatimBlock() throws IOException {
 		if(this.line.trimEmpty) {
 			return null;
 		}
@@ -293,7 +348,7 @@ doWhileLoop:
 	 * @param line
 	 * @return
 	 */
-	private boolean parseLinkReference() {
+	protected boolean parseLinkReference() {
 		int index = this.line.indexOf(']');
 		if(index == -1) {
 			return false;
@@ -321,7 +376,7 @@ doWhileLoop:
 	 * @return
 	 * @throws IOException
 	 */
-	private Node parseList(Node currentRoot, boolean ordered) throws IOException {
+	protected Node parseList(Node currentRoot, boolean ordered) throws IOException {
 		AbstractListNode listNode;
 		if(ordered) {
 			listNode = new OrderedListNode();
@@ -425,7 +480,7 @@ doWhileLoop:
 					}
 
 					// extract the text
-					if(isWhiteSpace(text.charAt(start))) {
+					if(MarkupUtils.isWhiteSpace(text.charAt(start))) {
 						text = text.substring(++start);
 					} else {
 						text = text.substring(start);
@@ -503,26 +558,13 @@ doWhileLoop:
 		return listNode;
 	}
 
-	private boolean isWhiteSpace(char ch) {
-		switch(ch) {
-			case Identifiers.SPACE:
-			case Identifiers.TAB:
-				return true;
-
-			default:
-				break;
-		}
-		
-		return false;
-	}
-
 	/**
 	 * Read a fenced code block from the line
 	 * 
 	 * @param line
 	 * @return
 	 */
-	private CodeBlockNode parseFencedCodeBlock() throws IOException {
+	protected CodeBlockNode parseFencedCodeBlock() throws IOException {
 		String language = null;
 		char terminator = this.line.terminator;
 		
@@ -555,7 +597,7 @@ doWhileLoop:
 	 * @return
 	 * @throws Exception
 	 */
-	private HeadingNode parseHeading(Node currentRoot) throws IOException {
+	protected HeadingNode parseHeading(Node currentRoot) throws IOException {
 		int headCount = 1;
 		int index = 1;
 		do {
@@ -581,7 +623,7 @@ doWhileLoop:
 			index--;
 		} while(true);
 		
-		this.line = new TextLine(this.line.substring(headCount, index).trim());
+		this.line = new TextLine(this.line.substring(headCount, index).trim(), this.options);
 		
 		Node textNode = parseText(currentRoot, false);
 		HeadingNode heading = new HeadingNode(headCount, textNode);
@@ -599,7 +641,7 @@ doWhileLoop:
 	 * @return
 	 * @throws Exception
 	 */
-	private Node parseText(Node currentRoot, boolean fetchMoreLines) throws IOException {
+	protected Node parseText(Node currentRoot, boolean fetchMoreLines) throws IOException {
 		if(!fetchMoreLines) {
 			return textNodeParser.parse(currentRoot, this.line.getText());
 		}
@@ -622,11 +664,11 @@ doWhileLoop:
 			collector.append('\n');
 			
 			if(this.line.endsWith("  ")) {
-				this.line = new TextLine(reader.readLine());
+				this.line = new TextLine(reader.readLine(), this.options);
 				break doWhileLoop;
 			}
 
-			this.line = new TextLine(reader.readLine());
+			this.line = new TextLine(reader.readLine(), this.options);
 			if(line == null || line.isEmpty || line.trimEmpty) {
 				break doWhileLoop;
 			}
@@ -641,7 +683,14 @@ doWhileLoop:
 		return textNodeParser.parse(currentRoot, collector.toString());
 	}
 	
-	private String parseBlockText() throws IOException {
+	/**
+	 * Parse block quote text that is identified by presence of a 
+	 * greater than sign at the beginning of the line.
+	 * 
+	 * @return
+	 * @throws IOException
+	 */
+	protected String parseBlockText() throws IOException {
 		StringBuilder builder = new StringBuilder(1024);
 		
 		int index = -1;

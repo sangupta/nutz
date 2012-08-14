@@ -346,47 +346,23 @@ public class MarkupUtils {
 		return false;
 	}
 	
-	public static int countCharsIgnoringSpaces(final String line, final char ch, final int startIndex) {
-		int count = 0;
-		for(int index = startIndex; index < line.length(); index++) {
-			char c = line.charAt(index);
-			if(c == ch) {
-				count++;
-				continue;
-			}
-			
-			if(c == ' ' || c == '\t') {
-				continue;
-			}
-			
-			break;
-		}
-		
-		return count;
-	}
+	/**
+	 * Test if the given character is a white-space or not.
+	 * 
+	 * @param ch
+	 * @return
+	 */
+	public static boolean isWhiteSpace(char ch) {
+		switch(ch) {
+			case Identifiers.SPACE:
+			case Identifiers.TAB:
+				return true;
 
-	public static String removeFirstN(String line, final char ch, final int num) {
-		int count = 0;
-		
-		for(int index = 0; index < line.length(); index++) {
-			char c = line.charAt(index);
-			if(c == ch) {
-				count++;
-				if(count == num) {
-					return line.substring(index + 1);
-				}
-				
-				continue;
-			}
-			
-			if(c == ' ' || c == '\t') {
-				continue;
-			}
-			
-			break;
+			default:
+				break;
 		}
 		
-		return null;
+		return false;
 	}
 
 }

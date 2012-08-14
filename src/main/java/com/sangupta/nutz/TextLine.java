@@ -31,7 +31,7 @@ import com.sangupta.nutz.ast.LineType;
  */
 public class TextLine {
 	
-	private String text;
+	String text;
 	
 	int leadingPosition = -1;
 	
@@ -51,9 +51,18 @@ public class TextLine {
 	
 	boolean isNull = false;
 	
-	public TextLine(String text) {
-		this.text = text;
+	private ProcessingOptions options;
+	
+	public TextLine(String text, ProcessingOptions options) {
+		// save options
+		this.options = options;
 		
+		// setup and initialize
+		this.text = text;
+		initialize();
+	}
+	
+	private void initialize() {
 		if(text == null) {
 			isEmpty = true;
 			isNull = true;
@@ -95,12 +104,12 @@ public class TextLine {
 			return LineType.Heading;
 		}
 		
-		if(this.text.startsWith("```", this.leadingPosition)) {
+		if(this.options.enableGithubFencedCodeBlocks && this.text.startsWith("```", this.leadingPosition)) {
 			this.terminator = '`';
 			return LineType.FencedCodeBlock;
 		}
 
-		if(this.text.startsWith("~~~", this.leadingPosition)) {
+		if(this.options.enablePhpFencedCodeBlocks && this.text.startsWith("~~~", this.leadingPosition)) {
 			this.terminator = '~';
 			return LineType.FencedCodeBlock;
 		}
