@@ -34,5 +34,3 @@ target/*
 
 # Project specific
 .settings/*
-nosubmit/*
-src/test/resources/*
