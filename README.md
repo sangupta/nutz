@@ -11,7 +11,9 @@ The need for `nutz` arises from the fact that none of the available Markdown pro
 * Is fast enough
 * Is as low-weight as possible
 
-`pegdown` uses PEG grammar which is difficult to extend. `Actuarius` and `Knockoff` are written in Scala and use regular expressions for parsing. `txtmark` passes only 20 of 23 Markdown tests as laid by [Daring Fireball](http://daringfireball.net/projects/markdown). 
+`pegdown` uses PEG grammar which is difficult to extend and passes 21 of 23 Markdown tests. `Actuarius` and `Knockoff` are written in Scala and use regular expressions for parsing. `txtmark` passes only 20 of 23 Markdown tests
+
+Markdown tests are benchmark tests as laid by [Daring Fireball](http://daringfireball.net/projects/markdown). 
 
 Links to alternative implementations are provided below.
 
