@@ -26,6 +26,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.commons.io.FileUtils;
+import org.pegdown.PegDownProcessor;
 
 import com.github.rjeschke.txtmark.Processor;
 import com.sangupta.comparator.HTMLComparer;
@@ -37,9 +38,9 @@ import com.sangupta.comparator.HTMLComparer;
  */
 public class PerformanceTestSuite {
 	
-	private static final int PER_TEST_RUNS = 20;
+	private static final int PER_TEST_RUNS = 1;
 	
-	private static final int NUM_TEST_SUITE_RUNS = 10;
+	private static final int NUM_TEST_SUITE_RUNS = 1;
 	
 	private static List<TestData> tests = new ArrayList<PerformanceTestSuite.TestData>();
 	
@@ -49,13 +50,13 @@ public class PerformanceTestSuite {
 		
 		for(File file : files) {
 			if(file.getName().endsWith(".text")) {
-				String markup = FileUtils.readFileToString(file);
+				final String markup = FileUtils.readFileToString(file);
 				
-				String output = file.getAbsolutePath();
-				output = output.replace(".text", ".html");
-				output = FileUtils.readFileToString(new File(output));
+				String html = file.getAbsolutePath();
+				html = html.replace(".text", ".html");
+				html = FileUtils.readFileToString(new File(html));
 
-				TestData testData = new TestData(markup, output);
+				TestData testData = new TestData(markup, html);
 				tests.add(testData);
 			}
 		}
@@ -63,7 +64,7 @@ public class PerformanceTestSuite {
 		TestResults nutz = runTests(new TestExecutor() {
 			
 			private MarkdownProcessor processor = new MarkdownProcessor();
-
+			
 			@Override
 			public String convertMarkup(String markup) throws Exception {
 				return processor.toHtml(markup);
@@ -80,8 +81,20 @@ public class PerformanceTestSuite {
 			
 		});
 		
+		TestResults pegdown = runTests(new TestExecutor() {
+			
+			private PegDownProcessor processor = new PegDownProcessor();
+
+			@Override
+			public String convertMarkup(String markup) throws Exception {
+				return processor.markdownToHtml(markup);
+			}
+			
+		});
+		
 		System.out.println("\n\n\n\n\n");
 		System.out.println("Nutz: " + nutz);
+		System.out.println("Pegdown: " + pegdown);
 		System.out.println("TextMark: " + txtmark);
 	}
 	
@@ -92,17 +105,18 @@ public class PerformanceTestSuite {
 		
 		long totalTime = 0;
 		
-		String html = null;
-
 		// iterate test suite
 		for(int testSuiteCounter = 0; testSuiteCounter < NUM_TEST_SUITE_RUNS; testSuiteCounter++) {
 
 			// run each test
-			for(TestData testData : tests) {
+			for(int currentTestIndex = 0; currentTestIndex < tests.size(); currentTestIndex++) {
+				TestData testData = tests.get(currentTestIndex);
 				boolean firstRun = true;
 				
 				// iterate each test
 				for(int testIterationCounter = 0; testIterationCounter < PER_TEST_RUNS; testIterationCounter++) {
+					String html = null;
+
 					long start = System.currentTimeMillis();
 					try {
 						html = testExecutor.convertMarkup(testData.markup);
@@ -114,17 +128,17 @@ public class PerformanceTestSuite {
 					long end = System.currentTimeMillis();
 					
 					totalTime += (end - start);
-				}
 				
-				if(firstRun) {
-					if(HTMLComparer.compareHtml(testData.html, html)) {
-						testsPass++;
-					} else {
-						testsFail++;
+					if(firstRun) {
+						if(HTMLComparer.compareHtml(testData.html, html)) {
+							testsPass++;
+						} else {
+							testsFail++;
+						}
 					}
-				}
 				
-				firstRun = false;
+					firstRun = false;
+				}
 			}
 		}
 		
