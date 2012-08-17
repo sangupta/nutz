@@ -578,6 +578,11 @@ doWhileLoop:
 		// till we get an ending fenced code block
 		do {
 			readLine();
+			
+			if(line.isNull) {
+				break;
+			}
+			
 			if(line.startsWith(terminator)) {
 				break;
 			}
@@ -585,6 +590,10 @@ doWhileLoop:
 			collector.append(line);
 			collector.append("\n");
 		} while(true);
+		
+		// read one more line from the file as we
+		// are still on the ending separator
+		readLine();
 		
 		CodeBlockNode codeBlock = new CodeBlockNode(collector.toString(), language);
 		return codeBlock;

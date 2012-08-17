@@ -36,7 +36,7 @@ import com.sangupta.nutz.ast.RootNode;
 public class RandomProcessorTest {
 
 	public static void main(String[] args) throws Exception {
-		String fileName = "Markdown Documentation - Basics";
+		String fileName = "markdown syntax - basics";
 		// fileName = "tabs";
 		String s3 = "src/test/resources/markdown/" + fileName + ".text";
 		String o3 = "src/test/resources/markdown/" + fileName + ".html";
@@ -44,39 +44,19 @@ public class RandomProcessorTest {
 		File file = new File(s3);
 		String markup = FileUtils.readFileToString(file);
 		
-//		markup = "*	this" +
-//				"\n" +
-//				"\n	*	sub" +
-//				"\n" +
-//				"\n	that";
-
-		
 		MarkdownProcessor processor = new MarkdownProcessor();
-		HtmlEmitter emitter = new HtmlEmitter();
-		
-		long start = System.currentTimeMillis();
-		RootNode rootNode = processor.parse(markup);
-		long end = System.currentTimeMillis();
-		System.out.println("Time taken in parsing: " + (end - start) + " ms.");
-		
-		start = System.currentTimeMillis();
-		String html = emitter.toHtml(rootNode);
-		end = System.currentTimeMillis();
 
-		System.out.println("Time taken in emitting HTML: " + (end - start) + " ms.");
-
-		String out = FileUtils.readFileToString(new File(o3));
-		FileUtils.write(new File("C:/users/sangupta/desktop/markdownTest.html"), html);
-		
-		boolean htmlEquals = HTMLComparer.compareHtml(out, html);
-		System.out.println("HTML Equals: " + htmlEquals);
-		
-		if(!htmlEquals && html.length() < 300) {
-			System.out.println("HTML: " + html);
+		for(int i = 0; i < 20; i++) {
+			long start = System.currentTimeMillis();
+			String html = processor.toHtml(markup);
+			long end = System.currentTimeMillis();
+	
+			System.out.println("Time taken in emitting HTML: " + (end - start) + " ms.");
+			
+			String out = FileUtils.readFileToString(new File(o3));
+			boolean htmlEquals = HTMLComparer.compareHtml(out, html);
+			System.out.println("HTML Equals: " + htmlEquals);
 		}
-		
-//		System.out.println("\n\n\n\n");
-//		DaringFireballTestSuite.main(args);
 	}
 	
 }
