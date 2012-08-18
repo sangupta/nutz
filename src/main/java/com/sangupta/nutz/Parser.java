@@ -338,7 +338,7 @@ doWhileLoop:
 			}
 		} while(true);
 		
-		return new CodeBlockNode(collector.toString(), lang);
+		return new CodeBlockNode(collector.toString().trim(), lang);
 	}
 
 	/**
@@ -595,7 +595,7 @@ doWhileLoop:
 		// are still on the ending separator
 		readLine();
 		
-		CodeBlockNode codeBlock = new CodeBlockNode(collector.toString(), language);
+		CodeBlockNode codeBlock = new CodeBlockNode(collector.toString().trim(), language);
 		return codeBlock;
 	}
 
