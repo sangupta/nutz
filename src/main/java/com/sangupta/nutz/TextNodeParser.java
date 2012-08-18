@@ -40,9 +40,11 @@ import com.sangupta.nutz.ast.UnreferencedAnchorNode;
 import com.sangupta.nutz.ast.XmlNode;
 
 /**
+ * Class that parses given text taking care of intricacies in line like text-styles, embedded
+ * images, anchors etc.
  * 
  * @author sangupta
- *
+ * @since 0.4
  */
 public class TextNodeParser implements Identifiers {
 	
@@ -354,23 +356,8 @@ public class TextNodeParser implements Identifiers {
 			return;
 		}
 		
-		// check if we do not have an image embedded in it
-		int imageIndex = line.indexOf(IMAGE_IDENTIFIER, pos + 1);
-		if(imageIndex != -1) {
-			// see if this is less than found ending point
-			if(imageIndex < index) {
-				// find next index
-				index = line.indexOf(LINK_END, index + 1);
-			}
-		}
-		
-		if(index == -1) {
-			// this is not a hyperlink
-			return;
-		}
-		
 		// this is the text
-		String linkText = line.substring(pos + 1, index);
+		final String linkText = line.substring(pos + 1, index);
 		pos = ++index;
 		
 		// either a URL would be specified
@@ -454,6 +441,11 @@ public class TextNodeParser implements Identifiers {
 		lastConverted = pos;
 	}
 
+	/**
+	 * Parse the given character block.
+	 * 
+	 * @param terminator
+	 */
 	private void parseCharacterBlock(final char terminator) {
 		int count = 1;
 

@@ -92,4 +92,10 @@ public class MarkdownProcessorTest extends AbstractHtmlTests {
 		testMarkup("<p><code>foo</code></p>", "`foo`");
 	}
 	
+	@Test
+	public void testImageInAnchor() throws IOException {
+		testMarkup("<p><a href=\"http://travis-ci.org/sangupta/jerry\"><img src=\"https://secure.travis-ci.org/sangupta/jerry.png?branch=master\" alt=\"Build Status\" title=\"\" /></a></p>",
+					"[![Build Status](https://secure.travis-ci.org/sangupta/jerry.png?branch=master)](http://travis-ci.org/sangupta/jerry)");
+	}
+	
 }
