@@ -25,6 +25,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import com.sangupta.nutz.ProcessingOptions;
+
 /**
  * An abstract node in the AST. Provides common functionality for all types of 
  * nodes.
@@ -54,6 +56,12 @@ public abstract class Node {
 		this.children.add(node);
 	}
 	
+	/**
+	 * Indicates whether the node has any child or not.
+	 * 
+	 * @return <code>true</code> if child are present, <code>false</code>
+	 *         otherwise
+	 */
 	public boolean hasChild() {
 		if(this.children != null && !this.children.isEmpty()) {
 			return true;
@@ -101,7 +109,7 @@ public abstract class Node {
 	 * @param atRootNode
 	 * @param referenceLinks
 	 */
-	public void write(StringBuilder builder, boolean atRootNode, Map<String, AnchorNode> referenceLinks) {
+	public void write(StringBuilder builder, boolean atRootNode, Map<String, AnchorNode> referenceLinks, ProcessingOptions options) {
 		builder.append(this.toString());
 	}
 	

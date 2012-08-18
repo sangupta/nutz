@@ -3,6 +3,7 @@ package com.sangupta.nutz.ast;
 import java.util.Map;
 
 import com.sangupta.nutz.Identifiers;
+import com.sangupta.nutz.ProcessingOptions;
 import com.sangupta.nutz.TextNodeParser;
 
 /**
@@ -39,14 +40,14 @@ public class UnreferencedAnchorNode extends Node {
 	}
 	
 	@Override
-	public void write(StringBuilder builder, boolean atRootNode, Map<String, AnchorNode> referenceLinks) {
+	public void write(StringBuilder builder, boolean atRootNode, Map<String, AnchorNode> referenceLinks, ProcessingOptions options) {
 		AnchorNode node = referenceLinks.get(this.text);
 		if(node == null) {
 			builder.append('[');
 			
 			// do this text via text parsing routine
 			TextNode textNode = new TextNodeParser().parse(this, this.text);
-			textNode.write(builder, false, referenceLinks);
+			textNode.write(builder, false, referenceLinks, options);
 			builder.append(']');
 			
 			return;
@@ -54,6 +55,6 @@ public class UnreferencedAnchorNode extends Node {
 		
 		// do it via the anchor
 		AnchorNode newAnchor = new AnchorNode(null, this.text, node.getUrl(), node.getTitle(), false, 0);
-		newAnchor.write(builder, atRootNode, referenceLinks);
+		newAnchor.write(builder, atRootNode, referenceLinks, options);
 	}
 }

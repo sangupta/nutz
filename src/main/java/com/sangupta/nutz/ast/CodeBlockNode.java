@@ -24,6 +24,11 @@ package com.sangupta.nutz.ast;
 import java.util.Map;
 
 import com.sangupta.nutz.HtmlEscapeUtils;
+import com.sangupta.nutz.ProcessingOptions;
+import com.sangupta.nutz.ProcessingOptions.SyntaxHighlightingOption;
+import com.sangupta.pepmint.Formatter;
+import com.sangupta.pepmint.Lexer;
+import com.sangupta.pepmint.Pepmint;
 
 /**
  * Represents a fenced code block in the AST.
@@ -49,20 +54,48 @@ public class CodeBlockNode extends Node {
 	}
 	
 	@Override
-	public void write(StringBuilder builder, boolean atRootNode, Map<String, AnchorNode> referenceLinks) {
-		builder.append("<pre");
-		
-		if(this.language != null) {
-			builder.append(" class=\"brush: ");
-			builder.append(this.language);
-			builder.append("\"");
+	public void write(StringBuilder builder, boolean atRootNode, Map<String, AnchorNode> referenceLinks, ProcessingOptions options) {
+		boolean needsEscaping = true;
+		boolean addClosingTags = true;
+		String formattedCode = this.code;
+
+		SyntaxHighlightingOption option = options.syntaxHighlightingOption;
+		if(this.language == null) {
+			option = SyntaxHighlightingOption.None;
 		}
 		
-		builder.append("><code>");
+		switch(option) {
+			case SyntaxHighlighter:
+				builder.append("<pre class=\"brush: ");
+				builder.append(this.language);
+				builder.append("\"><code>");
+				break;
+				
+			case Pepmint:
+				needsEscaping = false;
+				addClosingTags = false;
+				
+				Pepmint pepmint = new Pepmint();
+				Lexer lexer = pepmint.newLexer(this.language);
+				Formatter formatter = pepmint.newHtmlFormatter("");
+				formattedCode = pepmint.highlight(formattedCode, lexer, formatter);
+				break;
+				
+			case None:
+				builder.append("<pre><code>");
+				break;
+		}
 		
-		HtmlEscapeUtils.writeEscapedLine(this.code, builder);
+		if(needsEscaping) {
+			HtmlEscapeUtils.writeEscapedLine(formattedCode, builder);
+		} else {
+			builder.append(formattedCode);
+		}
 		
-		builder.append("</code></pre>");
+		if(addClosingTags) {
+			builder.append("</code></pre>");
+		}
+
 		builder.append(NEW_LINE);
 		builder.append(NEW_LINE);
 	}

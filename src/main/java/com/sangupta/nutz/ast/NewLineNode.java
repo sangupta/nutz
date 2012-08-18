@@ -3,6 +3,7 @@ package com.sangupta.nutz.ast;
 import java.util.Map;
 
 import com.sangupta.nutz.Identifiers;
+import com.sangupta.nutz.ProcessingOptions;
 
 public class NewLineNode extends TextNode {
 
@@ -11,7 +12,7 @@ public class NewLineNode extends TextNode {
 	}
 	
 	@Override
-	public void write(StringBuilder builder, boolean atRootNode, Map<String, AnchorNode> referenceLinks) {
+	public void write(StringBuilder builder, boolean atRootNode, Map<String, AnchorNode> referenceLinks, ProcessingOptions options) {
 		builder.append(Identifiers.NEW_LINE);
 	}
 	

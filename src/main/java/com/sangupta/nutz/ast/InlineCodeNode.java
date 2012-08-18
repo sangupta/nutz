@@ -24,6 +24,7 @@ package com.sangupta.nutz.ast;
 import java.util.Map;
 
 import com.sangupta.nutz.HtmlEscapeUtils;
+import com.sangupta.nutz.ProcessingOptions;
 
 /**
  * 
@@ -40,7 +41,7 @@ public class InlineCodeNode extends TextNode {
 	}
 	
 	@Override
-	public void write(StringBuilder builder, boolean atRootNode, Map<String, AnchorNode> referenceLinks) {
+	public void write(StringBuilder builder, boolean atRootNode, Map<String, AnchorNode> referenceLinks, ProcessingOptions options) {
 		builder.append("<code>");
 		HtmlEscapeUtils.writeEscapedLine(this.code, builder);
 		builder.append("</code>");

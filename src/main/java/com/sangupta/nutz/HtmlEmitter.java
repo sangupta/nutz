@@ -66,7 +66,7 @@ public class HtmlEmitter {
 		}
 		
 		StringBuilder builder = new StringBuilder();
-		root.write(builder, true, null);
+		root.write(builder, true, null, options);
 		return builder.toString();
 	}
 	

@@ -24,6 +24,8 @@ package com.sangupta.nutz.ast;
 import java.util.ArrayList;
 import java.util.Map;
 
+import com.sangupta.nutz.ProcessingOptions;
+
 /**
  * 
  * @author sangupta
@@ -71,7 +73,7 @@ public class ParagraphNode extends TextNode {
 	}
 	
 	@Override
-	public void write(StringBuilder builder, boolean atRootNode, Map<String, AnchorNode> referenceLinks) {
+	public void write(StringBuilder builder, boolean atRootNode, Map<String, AnchorNode> referenceLinks, ProcessingOptions options) {
 		if(this.children == null || this.children.isEmpty()) {
 			return;
 		}
@@ -89,7 +91,7 @@ public class ParagraphNode extends TextNode {
 				builder.append("<p>");
 			}
 			
-			this.children.get(0).write(builder, atRootNode, referenceLinks);
+			this.children.get(0).write(builder, atRootNode, referenceLinks, options);
 			
 			// The following is only needed for
 			// tidy purposes and can be skipped to 
@@ -146,7 +148,7 @@ public class ParagraphNode extends TextNode {
 				paraStart = true;
 			}
 			
-			node.write(builder, atRootNode, referenceLinks);
+			node.write(builder, atRootNode, referenceLinks, options);
 		}
 		
 		if(atRootNode) {

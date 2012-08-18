@@ -25,6 +25,7 @@ import java.util.Map;
 
 import com.sangupta.nutz.HtmlEscapeUtils;
 import com.sangupta.nutz.Identifiers;
+import com.sangupta.nutz.ProcessingOptions;
 import com.sangupta.nutz.TextNodeParser;
 
 /**
@@ -65,7 +66,7 @@ public class AnchorNode extends TextNode {
 	}
 	
 	@Override
-	public void write(StringBuilder builder, boolean atRootNode, Map<String, AnchorNode> referenceLinks) {
+	public void write(StringBuilder builder, boolean atRootNode, Map<String, AnchorNode> referenceLinks, ProcessingOptions options) {
 		if(onID) {
 			AnchorNode anchor;
 			String identifier;
@@ -81,7 +82,7 @@ public class AnchorNode extends TextNode {
 			// we need to emit the original string
 			if(anchor == null) {
 				builder.append('[');
-				this.text.write(builder, false, referenceLinks);
+				this.text.write(builder, false, referenceLinks, options);
 				builder.append(']');
 				
 				for(int i = 0; i < this.spaces; i++) {
@@ -118,7 +119,7 @@ public class AnchorNode extends TextNode {
 		
 		// write the text for anchor
 		if(this.text != null) {
-			this.text.write(builder, false, referenceLinks);
+			this.text.write(builder, false, referenceLinks, options);
 		} else {
 			builder.append(this.url);
 		}

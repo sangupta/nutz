@@ -23,6 +23,8 @@ package com.sangupta.nutz.ast;
 
 import java.util.Map;
 
+import com.sangupta.nutz.ProcessingOptions;
+
 /**
  * 
  * @author sangupta
@@ -31,7 +33,7 @@ import java.util.Map;
 public class HRuleNode extends Node {
 	
 	@Override
-	public void write(StringBuilder builder, boolean atRootNode, Map<String, AnchorNode> referenceLinks) {
+	public void write(StringBuilder builder, boolean atRootNode, Map<String, AnchorNode> referenceLinks, ProcessingOptions options) {
 		builder.append("<hr />");
 		builder.append(NEW_LINE);
 		builder.append(NEW_LINE);

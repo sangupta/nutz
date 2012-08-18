@@ -25,15 +25,21 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import com.sangupta.nutz.ProcessingOptions;
+
 /**
+ * Represent the root node of the Abstract-Syntax Tree.
  * 
  * @author sangupta
  *
  */
 public class RootNode extends Node {
 	
+	/**
+	 * Reference links that need to be stored for this tree. These are later used while rendering.
+	 */
 	private final Map<String, AnchorNode> referenceLinks = new HashMap<String, AnchorNode>();
-
+	
 	@Override
 	public String toString() {
 		StringBuilder b = new StringBuilder(1024);
@@ -50,10 +56,10 @@ public class RootNode extends Node {
 	}
 	
 	@Override
-	public void write(StringBuilder builder, boolean atRootNode, Map<String, AnchorNode> referenceLinks) {
+	public void write(StringBuilder builder, boolean atRootNode, Map<String, AnchorNode> referenceLinks, ProcessingOptions options) {
 		if(this.children != null && this.children.size() > 0) {
 			for(Node node : this.children) {
-				node.write(builder, true, this.referenceLinks);
+				node.write(builder, true, this.referenceLinks, options);
 			}
 		}
 	}
@@ -62,6 +68,15 @@ public class RootNode extends Node {
 		this.referenceLinks.put(id, new AnchorNode(null, null, link, title, false, 0));
 	}
 	
+	/**
+	 * Return the Anchor node associated with the given ID as might have been
+	 * saved as a reference link earlier.
+	 * 
+	 * @param id
+	 *            lookup identifier
+	 * 
+	 * @return associated {@link AnchorNode} if any
+	 */
 	public AnchorNode getLink(String id) {
 		return this.referenceLinks.get(id);
 	}

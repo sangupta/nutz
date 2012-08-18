@@ -23,6 +23,8 @@ package com.sangupta.nutz.ast;
 
 import java.util.Map;
 
+import com.sangupta.nutz.ProcessingOptions;
+
 /**
  * 
  * @author sangupta
@@ -63,7 +65,7 @@ public abstract class AbstractListNode extends Node {
 	}
 	
 	@Override
-	public void write(StringBuilder builder, boolean atRootNode, Map<String, AnchorNode> referenceLinks) {
+	public void write(StringBuilder builder, boolean atRootNode, Map<String, AnchorNode> referenceLinks, ProcessingOptions options) {
 		builder.append('<');
 		builder.append(this.tagName);
 		builder.append('>');
@@ -72,7 +74,7 @@ public abstract class AbstractListNode extends Node {
 		if(hasChild()) {
 			for(Node node : this.children) {
 				builder.append("<li>");
-				node.write(builder, true, referenceLinks);
+				node.write(builder, true, referenceLinks, options);
 				builder.append("</li>");
 				builder.append(NEW_LINE);
 			}

@@ -23,6 +23,8 @@ package com.sangupta.nutz.ast;
 
 import java.util.Map;
 
+import com.sangupta.nutz.ProcessingOptions;
+
 /**
  * 
  * @author sangupta
@@ -42,7 +44,7 @@ public class PlainTextNode extends TextNode {
 	}
 	
 	@Override
-	public void write(StringBuilder builder, boolean atRootNode, Map<String, AnchorNode> referenceLinks) {
+	public void write(StringBuilder builder, boolean atRootNode, Map<String, AnchorNode> referenceLinks, ProcessingOptions options) {
 		builder.append(this.text);
 	}
 	

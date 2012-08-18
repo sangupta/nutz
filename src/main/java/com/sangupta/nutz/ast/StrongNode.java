@@ -23,6 +23,7 @@ package com.sangupta.nutz.ast;
 
 import java.util.Map;
 
+import com.sangupta.nutz.ProcessingOptions;
 import com.sangupta.nutz.TextNodeParser;
 
 /**
@@ -53,9 +54,9 @@ public class StrongNode extends TextNode {
 	}
 	
 	@Override
-	public void write(StringBuilder builder, boolean atRootNode, Map<String, AnchorNode> referenceLinks) {
+	public void write(StringBuilder builder, boolean atRootNode, Map<String, AnchorNode> referenceLinks, ProcessingOptions options) {
 		builder.append("<strong>");
-		this.textNode.write(builder, false, referenceLinks);
+		this.textNode.write(builder, false, referenceLinks, options);
 		builder.append("</strong>");
 	}
 	

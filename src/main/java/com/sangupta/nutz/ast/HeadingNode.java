@@ -23,6 +23,8 @@ package com.sangupta.nutz.ast;
 
 import java.util.Map;
 
+import com.sangupta.nutz.ProcessingOptions;
+
 /**
  * 
  * @author sangupta
@@ -40,11 +42,11 @@ public class HeadingNode extends Node {
 	}
 	
 	@Override
-	public void write(StringBuilder builder, boolean atRootNode, Map<String, AnchorNode> referenceLinks) {
+	public void write(StringBuilder builder, boolean atRootNode, Map<String, AnchorNode> referenceLinks, ProcessingOptions options) {
 		builder.append("<h");
 		builder.append(this.headCount);
 		builder.append(">");
-		textNode.write(builder, false, referenceLinks);
+		textNode.write(builder, false, referenceLinks, options);
 		builder.append("</h");
 		builder.append(this.headCount);
 		builder.append(">");

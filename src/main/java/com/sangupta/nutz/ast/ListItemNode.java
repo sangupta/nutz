@@ -23,6 +23,8 @@ package com.sangupta.nutz.ast;
 
 import java.util.Map;
 
+import com.sangupta.nutz.ProcessingOptions;
+
 /**
  * Encapsulates a list item in an ordered, or un-ordered HTML list.
  * 
@@ -38,7 +40,7 @@ public class ListItemNode extends TextNode {
 	}
 	
 	@Override
-	public void write(StringBuilder builder, boolean atRootNode, Map<String, AnchorNode> referenceLinks) {
+	public void write(StringBuilder builder, boolean atRootNode, Map<String, AnchorNode> referenceLinks, ProcessingOptions options) {
 		if(this.children == null || this.children.isEmpty()) {
 			return;
 		}
@@ -73,7 +75,7 @@ public class ListItemNode extends TextNode {
 				}
 			}
 			
-			node.write(builder, atRootNode, referenceLinks);
+			node.write(builder, atRootNode, referenceLinks, options);
 			
 			// check if we have double new line nodes
 			// we need a para inserted

@@ -23,6 +23,8 @@ package com.sangupta.nutz.ast;
 
 import java.util.Map;
 
+import com.sangupta.nutz.ProcessingOptions;
+
 /**
  * 
  * @author sangupta
@@ -35,7 +37,7 @@ public class BlockQuoteNode extends Node {
 	}
 	
 	@Override
-	public void write(StringBuilder builder, boolean atRootNode, Map<String, AnchorNode> referenceLinks) {
+	public void write(StringBuilder builder, boolean atRootNode, Map<String, AnchorNode> referenceLinks, ProcessingOptions options) {
 		if(this.children == null || this.children.isEmpty()) {
 			return;
 		}
@@ -44,7 +46,7 @@ public class BlockQuoteNode extends Node {
 		builder.append(NEW_LINE);
 		
 		for(Node child : this.children) {
-			child.write(builder, atRootNode, referenceLinks);
+			child.write(builder, atRootNode, referenceLinks, options);
 		}
 		
 		builder.append(NEW_LINE);
