@@ -48,7 +48,7 @@ The working development version can be downloaded from:
 <dependency>
     <groupId>com.sangupta</groupId>
     <artifactId>nutz</artifactId>
-    <version>0.4.0</version>
+    <version>0.5.0</version>
 </dependency>
 ```
 
