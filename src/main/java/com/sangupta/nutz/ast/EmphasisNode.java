@@ -21,6 +21,7 @@
 
 package com.sangupta.nutz.ast;
 
+import java.io.IOException;
 import java.util.Map;
 
 import com.sangupta.nutz.ProcessingOptions;
@@ -41,7 +42,7 @@ public class EmphasisNode extends TextNode {
 	}
 	
 	@Override
-	public void write(StringBuilder builder, boolean atRootNode, Map<String, AnchorNode> referenceLinks, ProcessingOptions options) {
+	public void write(Appendable builder, boolean atRootNode, Map<String, AnchorNode> referenceLinks, ProcessingOptions options) throws IOException {
 		builder.append("<em>");
 		this.textNode.write(builder, false, referenceLinks, options);
 		builder.append("</em>");

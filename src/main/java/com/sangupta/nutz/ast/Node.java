@@ -21,6 +21,7 @@
 
 package com.sangupta.nutz.ast;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -109,7 +110,7 @@ public abstract class Node {
 	 * @param atRootNode
 	 * @param referenceLinks
 	 */
-	public void write(StringBuilder builder, boolean atRootNode, Map<String, AnchorNode> referenceLinks, ProcessingOptions options) {
+	public void write(Appendable builder, boolean atRootNode, Map<String, AnchorNode> referenceLinks, ProcessingOptions options) throws IOException {
 		builder.append(this.toString());
 	}
 	

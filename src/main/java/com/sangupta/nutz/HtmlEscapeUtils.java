@@ -21,6 +21,8 @@
 
 package com.sangupta.nutz;
 
+import java.io.IOException;
+
 /**
  * 
  * @author sangupta
@@ -28,7 +30,7 @@ package com.sangupta.nutz;
  */
 public class HtmlEscapeUtils {
 	
-	public static void writeEscapedLine(final String line, StringBuilder builder) {
+	public static void writeEscapedLine(final String line, Appendable builder) throws IOException {
 		char ch;
 		char[] array = line.toCharArray();
 		for(int index = 0; index < array.length; index++) {
