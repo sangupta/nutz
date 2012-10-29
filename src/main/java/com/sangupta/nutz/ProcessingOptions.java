@@ -22,7 +22,12 @@
 package com.sangupta.nutz;
 
 /**
- * 
+ * An <i>immutable</i> class for storing the various processing options.
+ * <p/>
+ * Usage:
+ * <code><pre>
+ * ProcessingOptions options = new ProcessingOptions().enablePhpFencedCodeBlocks(false);
+ * </pre></code>
  * @author sangupta
  *
  */
@@ -35,7 +40,7 @@ public class ProcessingOptions {
 	 * specifying a language that can then be used for syntax
 	 * highlighting of code. 
 	 */
-	public boolean enablePhpFencedCodeBlocks = true;
+	public final boolean enablePhpFencedCodeBlocks;
 	
 	/**
 	 * If set to <code>true</code> enabled the parsing of Github Flavored
@@ -43,14 +48,42 @@ public class ProcessingOptions {
 	 * <code>```</code>. Specifying of language at the end of start tag
 	 * is supported.
 	 */
-	public boolean enableGithubFencedCodeBlocks = true;
+	public final boolean enableGithubFencedCodeBlocks;
 	
 	/**
 	 * Defines the syntax highlighting option to be used on code blocks. The 
 	 * default behavior is to use Pepmint library for the same.
 	 */
-	public SyntaxHighlightingOption syntaxHighlightingOption = SyntaxHighlightingOption.Pepmint;
+	public final SyntaxHighlightingOption syntaxHighlightingOption;
 
+	/**
+	 * Sets the default options for processing.
+	 */
+	public ProcessingOptions() {
+		this(true, true, SyntaxHighlightingOption.Pepmint);
+	}
+	
+	/**
+	 * Configures all the available options, generally not used in favour of the setter methods.
+	 */
+	public ProcessingOptions(boolean enablePhpFencedCodeBlocks, boolean enableGithubFencedCodeBlocks, SyntaxHighlightingOption syntaxHighlightingOption) {
+		this.enablePhpFencedCodeBlocks = enablePhpFencedCodeBlocks;
+		this.enableGithubFencedCodeBlocks = enableGithubFencedCodeBlocks;
+		this.syntaxHighlightingOption = syntaxHighlightingOption;
+	}
+	
+	public ProcessingOptions enablePhpFencedCodeBlocks(boolean enablePhpFencedCodeBlocks) {
+		return new ProcessingOptions(enablePhpFencedCodeBlocks, enableGithubFencedCodeBlocks, syntaxHighlightingOption);
+	}
+	
+	public ProcessingOptions enableGithubFencedCodeBlocks(boolean enableGithubFencedCodeBlocks) {
+		return new ProcessingOptions(enablePhpFencedCodeBlocks, enableGithubFencedCodeBlocks, syntaxHighlightingOption);
+	}
+	
+	public ProcessingOptions syntaxHighlightingOption(SyntaxHighlightingOption syntaxHighlightingOption) {
+		return new ProcessingOptions(enablePhpFencedCodeBlocks, enableGithubFencedCodeBlocks, syntaxHighlightingOption);
+	}
+	
 	/**
 	 * Defines the syntax highlighting option to be used.
 	 * 
