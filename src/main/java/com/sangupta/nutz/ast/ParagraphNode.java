@@ -52,16 +52,10 @@ public class ParagraphNode extends TextNode {
 		while((node = lastNode()) instanceof NewLineNode) {
 			this.children.remove(node);
 		}
+
+		this.parent.replaceNode(this, new HeadingNode(headingStyle, this));
 		
-		Node child = this.children.get(this.children.size() - 1);
-		if(child instanceof PlainTextNode) {
-			// convert this to heading node
-			node = new HeadingNode(headingStyle, child);
-			this.parent.replaceNode(this, node);
-			return true;
-		}
-		
-		return false;
+		return true;
 	}
 	
 	private void add(TextNode node) {
