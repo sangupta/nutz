@@ -21,6 +21,7 @@
 
 package com.sangupta.nutz.ast;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Map;
 
@@ -52,16 +53,10 @@ public class ParagraphNode extends TextNode {
 		while((node = lastNode()) instanceof NewLineNode) {
 			this.children.remove(node);
 		}
+
+		this.parent.replaceNode(this, new HeadingNode(headingStyle, this));
 		
-		Node child = this.children.get(this.children.size() - 1);
-		if(child instanceof PlainTextNode) {
-			// convert this to heading node
-			node = new HeadingNode(headingStyle, child);
-			this.parent.replaceNode(this, node);
-			return true;
-		}
-		
-		return false;
+		return true;
 	}
 	
 	private void add(TextNode node) {
@@ -73,7 +68,7 @@ public class ParagraphNode extends TextNode {
 	}
 	
 	@Override
-	public void write(StringBuilder builder, boolean atRootNode, Map<String, AnchorNode> referenceLinks, ProcessingOptions options) {
+	public void write(Appendable builder, boolean atRootNode, Map<String, AnchorNode> referenceLinks, ProcessingOptions options) throws IOException {
 		if(this.children == null || this.children.isEmpty()) {
 			return;
 		}

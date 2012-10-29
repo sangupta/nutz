@@ -21,6 +21,7 @@
 
 package com.sangupta.nutz.ast;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -56,7 +57,7 @@ public class RootNode extends Node {
 	}
 	
 	@Override
-	public void write(StringBuilder builder, boolean atRootNode, Map<String, AnchorNode> referenceLinks, ProcessingOptions options) {
+	public void write(Appendable builder, boolean atRootNode, Map<String, AnchorNode> referenceLinks, ProcessingOptions options) throws IOException {
 		if(this.children != null && this.children.size() > 0) {
 			for(Node node : this.children) {
 				node.write(builder, true, this.referenceLinks, options);

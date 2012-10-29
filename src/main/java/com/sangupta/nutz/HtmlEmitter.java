@@ -23,6 +23,8 @@ package com.sangupta.nutz;
 
 import com.sangupta.nutz.ast.RootNode;
 
+import java.io.IOException;
+
 /**
  * Default HTML emitter that generates HTML representation of the
  * given {@link RootNode}.
@@ -60,14 +62,24 @@ public class HtmlEmitter {
 	 * @param root
 	 * @return
 	 */
-	public String toHtml(RootNode root) {
+	public String toHtml(RootNode root) throws IOException {
+		return toHtml(root, new StringBuilder()).toString();
+	}
+
+	/**
+	 * Write the HTML code for the given root node.
+	 *
+	 * @param root
+	 * @param builder
+	 * @return
+	 */
+	public <T extends Appendable> T toHtml(RootNode root, T builder) throws IOException {
 		if(root == null) {
 			throw new IllegalArgumentException("Root node cannot be null.");
 		}
 		
-		StringBuilder builder = new StringBuilder();
 		root.write(builder, true, null, options);
-		return builder.toString();
+		return builder;
 	}
 	
 }

@@ -21,6 +21,7 @@
 
 package com.sangupta.nutz.ast;
 
+import java.io.IOException;
 import java.util.Map;
 
 import com.sangupta.nutz.ProcessingOptions;
@@ -42,13 +43,13 @@ public class HeadingNode extends Node {
 	}
 	
 	@Override
-	public void write(StringBuilder builder, boolean atRootNode, Map<String, AnchorNode> referenceLinks, ProcessingOptions options) {
+	public void write(Appendable builder, boolean atRootNode, Map<String, AnchorNode> referenceLinks, ProcessingOptions options) throws IOException {
 		builder.append("<h");
-		builder.append(this.headCount);
+		builder.append(Integer.toString(this.headCount));
 		builder.append(">");
 		textNode.write(builder, false, referenceLinks, options);
 		builder.append("</h");
-		builder.append(this.headCount);
+		builder.append(Integer.toString(this.headCount));
 		builder.append(">");
 		builder.append(NEW_LINE);
 		builder.append(NEW_LINE);

@@ -21,6 +21,7 @@
 
 package com.sangupta.nutz.ast;
 
+import java.io.IOException;
 import java.util.Map;
 
 import com.sangupta.nutz.ProcessingOptions;
@@ -65,7 +66,7 @@ public abstract class AbstractListNode extends Node {
 	}
 	
 	@Override
-	public void write(StringBuilder builder, boolean atRootNode, Map<String, AnchorNode> referenceLinks, ProcessingOptions options) {
+	public void write(Appendable builder, boolean atRootNode, Map<String, AnchorNode> referenceLinks, ProcessingOptions options) throws IOException {
 		builder.append('<');
 		builder.append(this.tagName);
 		builder.append('>');
