@@ -136,4 +136,32 @@ public class MarkdownProcessor {
 		return new HtmlEmitter(options).toHtml(node);
 	}
 	
+	/**
+	 * Parse the markup from the given reader and append the html to the given writer.
+	 *
+	 * @param reader
+	 * @param writer
+	 * @return
+	 * @throws IOException
+	 */
+	public <T extends Appendable> T toHtml(Reader reader, T writer) throws IOException {
+		RootNode node = this.parser.parse(reader);
+		return this.htmlEmitter.toHtml(node, writer);
+	}
+	
+	/**
+	 * Parse the markup from the given reader and append the html to the given writer
+	 * using the given processing options (overriding any previous options).
+	 *
+	 * @param reader
+	 * @param writer
+	 * @param options
+	 * @return
+	 * @throws IOException
+	 */
+	public <T extends Appendable> T toHtml(Reader reader, T writer, ProcessingOptions options) throws IOException {
+		RootNode node = this.parser.parse(reader);
+		return new HtmlEmitter(options).toHtml(node, writer);
+	}
+	
 }

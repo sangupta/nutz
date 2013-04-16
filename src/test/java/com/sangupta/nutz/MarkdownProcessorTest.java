@@ -72,6 +72,11 @@ public class MarkdownProcessorTest extends AbstractHtmlTests {
 	}
 	
 	@Test
+	public void testHeadingWithLink() throws IOException {
+		testMarkup("<h2><a href=\"http://a.b/c\">C</a> Reference</h2>", "[C](http://a.b/c) Reference\n-----------------");
+	}
+	
+	@Test
 	public void testStrong() throws IOException {
 		testMarkup("<p><strong>Heading</strong></p>", " **Heading**");
 	}
